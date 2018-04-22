@@ -6,7 +6,7 @@ license = "MIT OR Apache-2.0"
 description = "Provides different tools for projects using the diesel_cli."
 readme = "README.md"
 documentation = "https://diesel.rs/guides/getting-started"
-homepage = "https://abby.md"
+homepage = "http://abby.md"
 repository = "https://github.com/abbychau/diesel_cli_ext"
 keywords = ["diesel", "migrations","codegen", "cli", "diesel_cli", "diesel_cli_ext"]
 
