@@ -8,7 +8,7 @@ readme = "README.md"
 documentation = "https://diesel.rs/guides/getting-started"
 homepage = "http://abby.md"
 repository = "https://github.com/abbychau/diesel_cli_ext"
-keywords = ["diesel", "migrations","codegen", "cli", "diesel_cli", "diesel_cli_ext"]
+keywords = ["diesel", "codegen", "cli", "diesel_cli", "diesel_cli_ext"]
 
 [[bin]]
 name = "diesel"
