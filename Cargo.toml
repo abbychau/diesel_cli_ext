@@ -1,6 +1,6 @@
 [package]
 name = "diesel_cli_ext"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Abby <i@abby.md>"]
 license = "MIT OR Apache-2.0"
 description = "Provides different tools for projects using the diesel_cli."
@@ -11,7 +11,7 @@ repository = "https://github.com/abbychau/diesel_cli_ext"
 keywords = ["diesel", "codegen", "cli", "diesel_cli", "diesel_cli_ext"]
 
 [[bin]]
-name = "diesel"
+name = "diesel_ext"
 path = "src/main.rs"
 
 [dependencies]
