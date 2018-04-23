@@ -94,7 +94,7 @@ fn main() {
         }else if cmp.contains("->") {
             let vec: Vec<&str> = line.split(" ").collect();
             let _type = vec[10].replace(",","");
-            let dict = match _action.as_str() {
+            let dict = match action {
                 "model" => &model_type_dict,
                 _ => &proto_type_dict
             };
@@ -107,7 +107,7 @@ fn main() {
 
             str_model.push_str(&format!("    pub {} : {},\n", 
                 &vec[8],
-                false => format!("{}",type_string)
+                format!("{}",type_string)
             ));
             count += 1;
             if count == 1 {
