@@ -1,6 +1,6 @@
 [package]
 name = "diesel_cli_ext"
-version = "0.1.3"
+version = "0.1.4"
 authors = ["Abby <i@abby.md>"]
 license = "MIT OR Apache-2.0"
 description = "Provides different tools for projects using the diesel_cli."
@@ -15,3 +15,7 @@ name = "diesel_ext"
 path = "src/main.rs"
 
 [dependencies]
+
+[badges]
+maintenance = { status = "actively-developed" }
+travis-ci = { repository = "abbychau/diesel_cli_ext" }

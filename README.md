@@ -12,3 +12,5 @@ To generate model structs:
 To generate proto structs:
 `diesel_ext proto > myproto.proto`
 
+To generate proto conversions:
+`diesel_ext into_proto > myproto.proto`, `diesel_ext from_proto > myproto.proto`
