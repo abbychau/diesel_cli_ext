@@ -62,6 +62,7 @@ pub fn parse(contents: String,action: &str) -> (String,String,String,String,Stri
             str_from_proto.push_str(&format!("\nimpl<'a> From<&'a models::{}> for _service::{} {{\n", struct_name, struct_name));
             str_into_proto.push_str(&format!("\nimpl<'a> Into<models::{}> for _service::{} {{\n", struct_name, struct_name));
             str_from_proto.push_str(&format!("    fn from(i: &models::{}) -> Self {{\n", struct_name));
+            str_from_proto.push_str(&format!("        let mut o = _service::{}::new();\n", struct_name));
             str_into_proto.push_str(&format!("    fn into(self) -> models::{} {{\n", struct_name));
         } else if cmp.contains("->") {
             let vec: Vec<&str> = line.split(" ").collect();

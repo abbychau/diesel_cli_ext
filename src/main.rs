@@ -45,6 +45,10 @@ use models;
 use proto::_service;
 use std::str::FromStr;
 
+fn str2Ndt(str: &str) -> NaiveDateTime {
+    NaiveDateTime::parse_from_str(str, \"%Y-%m-%d %H:%M:%S\").unwrap()
+}
+
 ");
             println!("{}", str_from_proto);
         },
