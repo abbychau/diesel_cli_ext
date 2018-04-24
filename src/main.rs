@@ -3,6 +3,39 @@ use std::fs::File;
 use std::io::prelude::*;
 mod parse;
 
+fn print_normal_dependencies(type_ndt:bool,type_bd:bool){
+    if type_ndt {
+        println!("use chrono::NaiveDateTime;");
+    }
+    if type_bd {
+        println!("use bigdecimal::BigDecimal;");
+    }
+}
+fn print_conversion_dependencies(){
+    //todo add selection for ndt and bd
+    println!("
+use models;
+use proto::client_service;
+use std::str::FromStr;
+use std::convert::From;");
+}
+fn print_conversion_methods(type_ndt:bool,type_bd:bool){
+    //todo add selection for ndt and bd
+    if type_ndt {
+    println!("
+fn str2ndt(istr: &str) -> NaiveDateTime {{
+    NaiveDateTime::parse_from_str(istr, \"%Y-%m-%d %H:%M:%S\").unwrap()
+}}");
+    }
+
+    if type_bd {
+        println!("
+fn str2bd(istr: &str) -> BigDecimal{{
+    BigDecimal::from_str(istr).unwrap()
+}}");
+    }
+}
+
 fn main() {
     //Read in
     let args: Vec<_> = env::args().collect();
@@ -24,44 +57,21 @@ fn main() {
     match action {
         "proto" => {
             println!("syntax = \"proto3\";\n\n");
-            //println!("package your_package_name;\n\n");
             println!("{}\n", str_proto);
             println!("{}\n", str_request);
             println!("service MessageRpc {{\n{}}}", str_rpc);
         },
         "model" => {
-            if type_ndt {
-                println!("use chrono::NaiveDateTime;");
-            }
-            if type_bd {
-                println!("use bigdecimal::BigDecimal;");
-            }
+            print_normal_dependencies(type_ndt,type_bd);
             println!("{}", str_model);
         },
         "from_proto"=> {
-            println!("use bigdecimal::BigDecimal;
-use chrono::{{DateTime, NaiveDateTime, TimeZone, Utc}};
-use models;
-use proto::_name_;
-use std::str::FromStr;
-use std::convert::From;
-
-fn str2Ndt(str: &str) -> NaiveDateTime {{
-    NaiveDateTime::parse_from_str(str, \"%Y-%m-%d %H:%M:%S\").unwrap()
-}}
-
-");
+            print_conversion_dependencies();
+            print_conversion_methods(type_ndt,type_bd);
             println!("{}", str_from_proto);
         },
         "into_proto"=> {
-            println!("use bigdecimal::BigDecimal;
-use models;
-use proto::_name_;
-use protobuf::RepeatedField;
-use std::collections::HashMap;
-use std::convert::From;
-
-");
+            print_conversion_dependencies();
             println!("{}", str_into_proto);
         },
         _=>{

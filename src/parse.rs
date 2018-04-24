@@ -173,22 +173,15 @@ mod tests {
     }
 
     #[test]
-    fn build_models() {
+    fn build_all() {
         let (str_proto,str_request,str_rpc,str_model,str_from_proto,str_into_proto,type_ndt,type_bd) = super::parse(get_contents(),"model");
         assert_eq!(str_proto.chars().count(),572);
+        assert_eq!(str_into_proto.chars().count(),1660);
+        assert_eq!(str_from_proto.chars().count(),1533);
         assert_eq!(str_request.chars().count(),281);
         assert_eq!(str_rpc.chars().count(),403);
         assert_eq!(type_ndt,true);
         assert_eq!(type_bd,false);
     }
-    
-    #[test]
-    fn build_proto() {
-        let (str_proto,str_request,str_rpc,str_model,str_from_proto,str_into_proto,type_ndt,type_bd) = super::parse(get_contents(),"proto");
-        assert_eq!(str_proto.chars().count(),566);
-        assert_eq!(str_request.chars().count(),281);
-        assert_eq!(str_rpc.chars().count(),403);
-        assert_eq!(type_ndt,false);
-        assert_eq!(type_bd,false);
-    }
+      
 }
