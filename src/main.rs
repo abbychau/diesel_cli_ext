@@ -64,6 +64,8 @@ use std::convert::From;
 ");
             println!("{}", str_into_proto);
         },
-        _=>{}
+        _=>{
+            println!("Unknown parameter. Please try proto, model, from_proto, or into_proto");
+        }
     }
 }
