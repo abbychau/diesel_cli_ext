@@ -59,11 +59,14 @@ pub fn parse(contents: String,action: &str) -> (String,String,String,String,Stri
             str_model.push_str(&format!("pub struct {} {{\n", struct_name));
             str_proto.push_str(&format!("message {} {{\n", struct_name));
 
-            str_from_proto.push_str(&format!("\nimpl<'a> From<&'a models::{}> for _service::{} {{\n", struct_name, struct_name));
-            str_into_proto.push_str(&format!("\nimpl<'a> Into<models::{}> for _service::{} {{\n", struct_name, struct_name));
-            str_from_proto.push_str(&format!("    fn from(i: &models::{}) -> Self {{\n", struct_name));
-            str_from_proto.push_str(&format!("        let mut o = _service::{}::new();\n", struct_name));
-            str_into_proto.push_str(&format!("    fn into(self) -> models::{} {{\n", struct_name));
+            str_into_proto.push_str(&format!("\nimpl From<models::{}> for _name_::{} {{\n", struct_name, struct_name));
+            str_from_proto.push_str(&format!("\nimpl From<_name_::{}> for models::{} {{\n", struct_name, struct_name));
+
+            str_into_proto.push_str(&format!("    fn from(i: models::{}) -> Self {{\n", struct_name));
+            str_from_proto.push_str(&format!("    fn from(i: _name_::{}) -> Self {{\n", struct_name));
+
+            str_from_proto.push_str(&format!("        models::{}{{\n", struct_name));
+            str_into_proto.push_str(&format!("        let mut o = _name_::{}::new();\n", struct_name));
         } else if cmp.contains("->") {
             let vec: Vec<&str> = line.split(" ").collect();
             let _type = vec[10].replace(",", "");
@@ -100,8 +103,17 @@ pub fn parse(contents: String,action: &str) -> (String,String,String,String,Stri
                 ));
             }
             str_proto.push_str(&format!("    {} {} = {};\n", type_string, &vec[8], count));
-            str_from_proto.push_str(&format!("        {}: self.get_{}(),\n", &vec[8], &vec[8]));
-            str_into_proto.push_str(&format!("        o.set_{}(i.{});\n", &vec[8], &vec[8]));
+            str_from_proto.push_str(&format!("            {}: i.get_{}(){},\n", &vec[8], &vec[8], match type_string{
+                &"string" => ".to_string()",
+                &"String" => ".to_string()",
+                &"BigDecimal" => ".to_bigdecimal()",
+                _ => ""
+            }));
+            str_into_proto.push_str(&format!("        o.set_{}(i.{}{});\n", &vec[8], &vec[8], match type_string{
+                &"string" => ".to_string()",
+                &"String" => ".to_string()",
+                _ => ".into()"
+            }));
             //str_into_proto
             closable = true;
         } else if cmp.contains("}") {
@@ -110,7 +122,9 @@ pub fn parse(contents: String,action: &str) -> (String,String,String,String,Stri
                 str_model.push_str(&format!("}}\n"));
                 str_proto.push_str(&format!("}}\n"));
 
+                str_from_proto.push_str(&format!("        }}\n"));
                 str_from_proto.push_str(&format!("    }}\n"));
+                
                 str_into_proto.push_str(&format!("        o\n    }}\n"));
                 
                 str_from_proto.push_str(&format!("}}\n"));

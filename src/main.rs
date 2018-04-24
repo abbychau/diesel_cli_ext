@@ -42,12 +42,13 @@ fn main() {
             println!("use bigdecimal::BigDecimal;
 use chrono::{{DateTime, NaiveDateTime, TimeZone, Utc}};
 use models;
-use proto::_service;
+use proto::_name_;
 use std::str::FromStr;
+use std::convert::From;
 
-fn str2Ndt(str: &str) -> NaiveDateTime {
+fn str2Ndt(str: &str) -> NaiveDateTime {{
     NaiveDateTime::parse_from_str(str, \"%Y-%m-%d %H:%M:%S\").unwrap()
-}
+}}
 
 ");
             println!("{}", str_from_proto);
@@ -55,7 +56,7 @@ fn str2Ndt(str: &str) -> NaiveDateTime {
         "into_proto"=> {
             println!("use bigdecimal::BigDecimal;
 use models;
-use proto::_service;
+use proto::_name_;
 use protobuf::RepeatedField;
 use std::collections::HashMap;
 use std::convert::From;
