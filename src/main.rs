@@ -44,6 +44,9 @@ fn main() {
         action = "model";
     } else {
         action = &args[1];
+        if action == "into_proto" || action == "from_proto" {
+            //TODO to replace _name_
+        }
     }
 
     let mut f = File::open("src/schema.rs")

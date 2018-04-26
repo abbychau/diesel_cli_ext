@@ -175,13 +175,13 @@ mod tests {
     #[test]
     fn build_all() {
         let (str_proto,str_request,str_rpc,str_model,str_from_proto,str_into_proto,type_ndt,type_bd) = super::parse(get_contents(),"model");
-        assert_eq!(str_proto.chars().count(),572);
-        assert_eq!(str_into_proto.chars().count(),1660);
-        assert_eq!(str_from_proto.chars().count(),1533);
-        assert_eq!(str_request.chars().count(),281);
-        assert_eq!(str_rpc.chars().count(),403);
+        assert_eq!(str_proto.chars().count(),191);
+        assert_eq!(str_into_proto.chars().count(),582);
+        assert_eq!(str_from_proto.chars().count(),556);
+        assert_eq!(str_request.chars().count(),109);
+        assert_eq!(str_rpc.chars().count(),151);
         assert_eq!(type_ndt,true);
-        assert_eq!(type_bd,false);
+        assert_eq!(type_bd,true);
     }
       
 }
