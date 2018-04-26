@@ -40,12 +40,15 @@ fn main() {
     //Read in
     let args: Vec<_> = env::args().collect();
     let action;
+    let mut class_name = "";
     if args.len() < 2 {
         action = "model";
     } else {
         action = &args[1];
         if action == "into_proto" || action == "from_proto" {
-            //TODO to replace _name_
+            if args.len() >= 3{
+                class_name = &args[2];
+            }
         }
     }
 
@@ -71,11 +74,11 @@ fn main() {
         "from_proto"=> {
             print_conversion_dependencies();
             print_conversion_methods(type_ndt,type_bd);
-            println!("{}", str_from_proto);
+            println!("{}", str_from_proto.replace("_name_",class_name));
         },
         "into_proto"=> {
             print_conversion_dependencies();
-            println!("{}", str_into_proto);
+            println!("{}", str_into_proto.replace("_name_",class_name));
         },
         _=>{
             println!("Unknown parameter. Please try proto, model, from_proto, or into_proto");

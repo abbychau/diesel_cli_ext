@@ -69,7 +69,9 @@ service MessageRpc {
 ```
 
 ### To generate proto conversions:
-`diesel_ext from_proto > proto/src/conversion/from_proto.rs`, `diesel_ext into_proto > proto/src/conversion/into_proto.rs`
+`diesel_ext from_proto class_name > proto/src/conversion/from_proto.rs`, `diesel_ext into_proto class_name > proto/src/conversion/into_proto.rs`
+
+(if you omit the second parameter, names will be displayed as `_name_` for your search and replace.)
 
 Sample output(from):
 ``` rust
@@ -78,8 +80,8 @@ use proto::client_service;
 use std::str::FromStr;
 use std::convert::From;
 
-impl From<_name_::CarryOverBalance> for models::CarryOverBalance {
-    fn from(i: _name_::CarryOverBalance) -> Self {
+impl From<class_name::CarryOverBalance> for models::CarryOverBalance {
+    fn from(i: class_name::CarryOverBalance) -> Self {
         models::CarryOverBalance{
             account_id: i.get_account_id(),
             debit: i.get_debit().to_string(),
@@ -88,8 +90,8 @@ impl From<_name_::CarryOverBalance> for models::CarryOverBalance {
     }
 }
 
-impl From<_name_::Order> for models::Order {
-    fn from(i: _name_::Order) -> Self {
+impl From<class_name::Order> for models::Order {
+    fn from(i: class_name::Order) -> Self {
         models::Order{
             id1: i.get_id1(),
             time: i.get_time().to_string(),
@@ -97,6 +99,7 @@ impl From<_name_::Order> for models::Order {
         }
     }
 }
+
 ```
 
 into:
@@ -106,9 +109,9 @@ use proto::client_service;
 use std::str::FromStr;
 use std::convert::From;
 
-impl From<models::CarryOverBalance> for _name_::CarryOverBalance {
+impl From<models::CarryOverBalance> for class_name::CarryOverBalance {
     fn from(i: models::CarryOverBalance) -> Self {
-        let mut o = _name_::CarryOverBalance::new();
+        let mut o = class_name::CarryOverBalance::new();
         o.set_account_id(i.account_id.into());
         o.set_debit(i.debit.to_string());
         o.set_description(i.description.to_string());
@@ -116,9 +119,9 @@ impl From<models::CarryOverBalance> for _name_::CarryOverBalance {
     }
 }
 
-impl From<models::Order> for _name_::Order {
+impl From<models::Order> for class_name::Order {
     fn from(i: models::Order) -> Self {
-        let mut o = _name_::Order::new();
+        let mut o = class_name::Order::new();
         o.set_id1(i.id1.into());
         o.set_time(i.time.to_string());
         o.set_json(i.json.to_string());
