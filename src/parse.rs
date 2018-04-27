@@ -1,6 +1,8 @@
 use std::collections::HashMap;
-pub fn parse(contents: String,action: &str) -> (String,String,String,String,String,String,bool,bool) {
-
+pub fn parse(
+    contents: String,
+    action: &str,
+) -> (String, String, String, String, String, String, bool, bool) {
     //Parse
     let mut str_model: String = "".to_string();
     let mut str_proto: String = "".to_string();
@@ -26,7 +28,7 @@ pub fn parse(contents: String,action: &str) -> (String,String,String,String,Stri
         ("Float4", "f32"),
         ("Bool", "bool"),
         ("Json", "Json"),
-        ("Jsonb", "Jsonb"),                
+        ("Jsonb", "Jsonb"),
         ("Varchar", "String"),
     ].iter()
         .cloned()
@@ -42,7 +44,7 @@ pub fn parse(contents: String,action: &str) -> (String,String,String,String,Stri
         ("Float4", "float"),
         ("Bool", "bool"),
         ("Json", "string"),
-        ("Jsonb", "string"),   
+        ("Jsonb", "string"),
         ("Varchar", "string"),
     ].iter()
         .cloned()
@@ -59,14 +61,29 @@ pub fn parse(contents: String,action: &str) -> (String,String,String,String,Stri
             str_model.push_str(&format!("pub struct {} {{\n", struct_name));
             str_proto.push_str(&format!("message {} {{\n", struct_name));
 
-            str_into_proto.push_str(&format!("\nimpl From<models::{}> for _name_::{} {{\n", struct_name, struct_name));
-            str_from_proto.push_str(&format!("\nimpl From<_name_::{}> for models::{} {{\n", struct_name, struct_name));
+            str_into_proto.push_str(&format!(
+                "\nimpl From<models::{}> for _name_::{} {{\n",
+                struct_name, struct_name
+            ));
+            str_from_proto.push_str(&format!(
+                "\nimpl From<_name_::{}> for models::{} {{\n",
+                struct_name, struct_name
+            ));
 
-            str_into_proto.push_str(&format!("    fn from(i: models::{}) -> Self {{\n", struct_name));
-            str_from_proto.push_str(&format!("    fn from(i: _name_::{}) -> Self {{\n", struct_name));
+            str_into_proto.push_str(&format!(
+                "    fn from(i: models::{}) -> Self {{\n",
+                struct_name
+            ));
+            str_from_proto.push_str(&format!(
+                "    fn from(i: _name_::{}) -> Self {{\n",
+                struct_name
+            ));
 
             str_from_proto.push_str(&format!("        models::{}{{\n", struct_name));
-            str_into_proto.push_str(&format!("        let mut o = _name_::{}::new();\n", struct_name));
+            str_into_proto.push_str(&format!(
+                "        let mut o = _name_::{}::new();\n",
+                struct_name
+            ));
         } else if cmp.contains("->") {
             let vec: Vec<&str> = line.split(" ").collect();
             let _type = vec[10].replace(",", "");
@@ -86,7 +103,7 @@ pub fn parse(contents: String,action: &str) -> (String,String,String,String,Stri
             }
 
             str_model.push_str(&format!(
-                "    pub {} : {},\n",
+                "    pub {}: {},\n",
                 &vec[8],
                 format!("{}", type_string)
             ));
@@ -103,17 +120,27 @@ pub fn parse(contents: String,action: &str) -> (String,String,String,String,Stri
                 ));
             }
             str_proto.push_str(&format!("    {} {} = {};\n", type_string, &vec[8], count));
-            str_from_proto.push_str(&format!("            {}: i.get_{}(){},\n", &vec[8], &vec[8], match type_string{
-                &"string" => ".to_string()",
-                &"String" => ".to_string()",
-                &"BigDecimal" => ".to_bigdecimal()",
-                _ => ""
-            }));
-            str_into_proto.push_str(&format!("        o.set_{}(i.{}{});\n", &vec[8], &vec[8], match type_string{
-                &"string" => ".to_string()",
-                &"String" => ".to_string()",
-                _ => ".into()"
-            }));
+            str_from_proto.push_str(&format!(
+                "            {}: i.get_{}(){},\n",
+                &vec[8],
+                &vec[8],
+                match type_string {
+                    &"string" => ".to_string()",
+                    &"String" => ".to_string()",
+                    &"BigDecimal" => ".to_bigdecimal()",
+                    _ => "",
+                }
+            ));
+            str_into_proto.push_str(&format!(
+                "        o.set_{}(i.{}{});\n",
+                &vec[8],
+                &vec[8],
+                match type_string {
+                    &"string" => ".to_string()",
+                    &"String" => ".to_string()",
+                    _ => ".into()",
+                }
+            ));
             //str_into_proto
             closable = true;
         } else if cmp.contains("}") {
@@ -124,16 +151,25 @@ pub fn parse(contents: String,action: &str) -> (String,String,String,String,Stri
 
                 str_from_proto.push_str(&format!("        }}\n"));
                 str_from_proto.push_str(&format!("    }}\n"));
-                
+
                 str_into_proto.push_str(&format!("        o\n    }}\n"));
-                
+
                 str_from_proto.push_str(&format!("}}\n"));
                 str_into_proto.push_str(&format!("}}\n"));
                 closable = false;
             }
         }
     }
-    (str_proto,str_request,str_rpc,str_model,str_from_proto,str_into_proto,type_ndt,type_bd)
+    (
+        str_proto,
+        str_request,
+        str_rpc,
+        str_model,
+        str_from_proto,
+        str_into_proto,
+        type_ndt,
+        type_bd,
+    )
 }
 
 fn propercase(s: &str) -> String {
@@ -159,29 +195,39 @@ fn propercase(s: &str) -> String {
     store.into_iter().collect()
 }
 
-
 #[cfg(test)]
 mod tests {
-    use std::io::prelude::*;
     use std::fs::File;
+    use std::io::prelude::*;
 
-    fn get_contents()->String{
-        let mut f = ::std::fs::File::open("test_data/schema.rs").expect("File not found. Please run in the directory with schema.rs.");
+    fn get_contents() -> String {
+        let mut f = ::std::fs::File::open("test_data/schema.rs")
+            .expect("File not found. Please run in the directory with schema.rs.");
         let mut contents = String::new();
-        f.read_to_string(&mut contents).expect("Something went wrong reading the file.");
+        f.read_to_string(&mut contents)
+            .expect("Something went wrong reading the file.");
         contents
     }
 
     #[test]
     fn build_all() {
-        let (str_proto,str_request,str_rpc,str_model,str_from_proto,str_into_proto,type_ndt,type_bd) = super::parse(get_contents(),"model");
-        assert_eq!(str_proto.chars().count(),191);
-        assert_eq!(str_into_proto.chars().count(),582);
-        assert_eq!(str_from_proto.chars().count(),556);
-        assert_eq!(str_request.chars().count(),109);
-        assert_eq!(str_rpc.chars().count(),151);
-        assert_eq!(type_ndt,true);
-        assert_eq!(type_bd,true);
+        let (
+            str_proto,
+            str_request,
+            str_rpc,
+            str_model,
+            str_from_proto,
+            str_into_proto,
+            type_ndt,
+            type_bd,
+        ) = super::parse(get_contents(), "model");
+        assert_eq!(str_proto.chars().count(), 191);
+        assert_eq!(str_into_proto.chars().count(), 582);
+        assert_eq!(str_from_proto.chars().count(), 556);
+        assert_eq!(str_request.chars().count(), 109);
+        assert_eq!(str_rpc.chars().count(), 151);
+        assert_eq!(type_ndt, true);
+        assert_eq!(type_bd, true);
     }
-      
+
 }
