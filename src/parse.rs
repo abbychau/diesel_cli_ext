@@ -51,7 +51,7 @@ pub fn parse(
         .collect();
     for line in lines {
         let cmp = line.to_string();
-        if cmp.contains("#[") {
+        if cmp.contains("#[") || cmp.contains("joinable!(") {
             //do nothing
         } else if cmp.contains("table!") {
             str_model.push_str(&format!("\n#[derive(Queryable)]\n"));
