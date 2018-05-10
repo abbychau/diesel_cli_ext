@@ -91,6 +91,7 @@ pub fn parse(
                 "model" => &model_type_dict,
                 _ => &proto_type_dict,
             };
+            let is_optional = _type.clone().contains("Nullable<");
             let mut type_string = match dict.get(_type.replace("Nullable<","").replace(">","").trim()){
                 Some(name)=>name,
                 None=> panic!("{} is not recognized. Please free feel to expand the HashMap. This could provide good hints: https://kotiri.com/2018/01/31/postgresql-diesel-rust-types.html", _type)
@@ -105,7 +106,11 @@ pub fn parse(
             str_model.push_str(&format!(
                 "    pub {}: {},\n",
                 &vec[8],
-                format!("{}", type_string)
+                if is_optional {
+                    format!("Option<{}>", type_string)
+                } else {
+                    format!("{}", type_string)
+                }
             ));
             count += 1;
             if count == 1 {
@@ -197,7 +202,6 @@ fn propercase(s: &str) -> String {
 
 #[cfg(test)]
 mod tests {
-    use std::fs::File;
     use std::io::prelude::*;
 
     fn get_contents() -> String {
@@ -226,6 +230,7 @@ mod tests {
         assert_eq!(str_from_proto.chars().count(), 556);
         assert_eq!(str_request.chars().count(), 109);
         assert_eq!(str_rpc.chars().count(), 151);
+        assert_eq!(str_model.chars().count(), 255);
         assert_eq!(type_ndt, true);
         assert_eq!(type_bd, true);
     }
