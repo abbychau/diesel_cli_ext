@@ -54,7 +54,7 @@ pub fn parse(
         if cmp.contains("#[") || cmp.contains("joinable!(") {
             //do nothing
         } else if cmp.contains("table!") {
-            str_model.push_str(&format!("\n#[derive(Queryable)]\n"));
+            str_model.push_str(&format!("\n#[derive(Queryable,Debug)]\n"));
         } else if cmp.contains(") {") {
             let vec: Vec<&str> = line.split(" ").collect();
             struct_name = propercase(vec[4]);
@@ -230,7 +230,7 @@ mod tests {
         assert_eq!(str_from_proto.chars().count(), 556);
         assert_eq!(str_request.chars().count(), 109);
         assert_eq!(str_rpc.chars().count(), 151);
-        assert_eq!(str_model.chars().count(), 255);
+        assert_eq!(str_model.chars().count(), 267);
         assert_eq!(type_ndt, true);
         assert_eq!(type_bd, true);
     }

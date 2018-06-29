@@ -58,7 +58,7 @@ fn main() {
         }
     }
 
-    let mut f = File::open("src/schema.rs")
+    let mut f = File::open("schema.rs")
         .expect("File not found. Please run in the directory with schema.rs.");
     let mut contents = String::new();
     f.read_to_string(&mut contents)
