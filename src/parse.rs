@@ -29,6 +29,7 @@ pub fn parse(
         ("Bool", "bool"),
         ("Json", "Json"),
         ("Jsonb", "Jsonb"),
+        ("Uuid", "Uuid"),
         ("Varchar", "String"),
     ].iter()
         .cloned()
