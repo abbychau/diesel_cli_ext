@@ -25,15 +25,17 @@ pub fn parse(
         ("Numeric", "BigDecimal"),
         ("Text", "String"),
         ("Timestamp", "NaiveDateTime"),
+        ("Timestamptz", "NaiveDateTime"),
         ("Float4", "f32"),
         ("Bool", "bool"),
         ("Json", "Json"),
         ("Jsonb", "Jsonb"),
         ("Uuid", "Uuid"),
         ("Varchar", "String"),
-    ].iter()
-        .cloned()
-        .collect();
+    ]
+    .iter()
+    .cloned()
+    .collect();
     let proto_type_dict: HashMap<&str, &str> = [
         ("Int2", "int32"),
         ("Int4", "int32"),
@@ -42,14 +44,16 @@ pub fn parse(
         ("Numeric", "string"),
         ("Text", "string"),
         ("Timestamp", "string"),
+        ("Timestamptz", "string"),
         ("Float4", "float"),
         ("Bool", "bool"),
         ("Json", "string"),
         ("Jsonb", "string"),
         ("Varchar", "string"),
-    ].iter()
-        .cloned()
-        .collect();
+    ]
+    .iter()
+    .cloned()
+    .collect();
     for line in lines {
         let cmp = line.to_string();
         if cmp.contains("#[") || cmp.contains("joinable!(") {
@@ -226,12 +230,13 @@ mod tests {
             type_ndt,
             type_bd,
         ) = super::parse(get_contents(), "model");
-        assert_eq!(str_proto.chars().count(), 191);
-        assert_eq!(str_into_proto.chars().count(), 582);
-        assert_eq!(str_from_proto.chars().count(), 556);
+        println!("str_model {}", str_model);
+        assert_eq!(str_proto.chars().count(), 220);
+        assert_eq!(str_into_proto.chars().count(), 619);
+        assert_eq!(str_from_proto.chars().count(), 590);
         assert_eq!(str_request.chars().count(), 109);
         assert_eq!(str_rpc.chars().count(), 151);
-        assert_eq!(str_model.chars().count(), 267);
+        assert_eq!(str_model.chars().count(), 297);
         assert_eq!(type_ndt, true);
         assert_eq!(type_bd, true);
     }
