@@ -2,6 +2,10 @@
 
 Diesel CLI Extension is a tool-belt that aids Diesel CLI after it built schema.rs .
 
+[![Build Status](https://travis-ci.org/abbychau/diesel_cli_ext.svg)](https://travis-ci.org/diesel_cli_ext/diesel)
+[![Crates.io](https://img.shields.io/crates/v/diesel_cli_ext.svg)](https://crates.io/crates/diesel_cli_ext)
+
+
 It contains 4 functions at this moment.
 1. Generate protobuf file.(`diesel_ext proto`)
 2. Generate model rust structs.(`diesel_ext model`)
