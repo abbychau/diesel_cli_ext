@@ -16,7 +16,7 @@ pub fn parse(
     let mut type_bd: bool = false;
     let mut count: u16 = 0;
     let mut struct_name: String = "".to_string();
-    let lines = contents.split("\n");
+    let lines = contents.split('\n');
     let model_type_dict: HashMap<&str, &str> = [
         ("Int2", "i16"),
         ("Int4", "i32"),
@@ -61,9 +61,9 @@ pub fn parse(
         if cmp.contains("#[") || cmp.contains("joinable!(") {
             //do nothing
         } else if cmp.contains("table!") {
-            str_model.push_str(&format!("\n#[derive(Queryable,Debug)]\n"));
+            str_model.push_str("\n#[derive(Queryable,Debug)]\n");
         } else if cmp.contains(") {") {
-            let vec: Vec<&str> = line.split(" ").collect();
+            let vec: Vec<&str> = line.split(' ').collect();
             struct_name = propercase(vec[4]);
             str_model.push_str(&format!("pub struct {} {{\n", struct_name));
             str_proto.push_str(&format!("message {} {{\n", struct_name));
@@ -92,14 +92,14 @@ pub fn parse(
                 struct_name
             ));
         } else if cmp.contains("->") {
-            let vec: Vec<&str> = line.split(" ").collect();
+            let vec: Vec<&str> = line.split(' ').collect();
             let _type = vec[10].replace(",", "");
             let dict = match action {
                 "model" => &model_type_dict,
                 _ => &proto_type_dict,
             };
             let is_optional = _type.clone().contains("Nullable<");
-            let mut type_string = match dict.get(_type.replace("Nullable<","").replace(">","").trim()){
+            let type_string = match dict.get(_type.replace("Nullable<","").replace(">","").trim()){
                 Some(name)=>name,
                 None=> panic!("{} is not recognized. Please free feel to expand the HashMap. This could provide good hints: https://kotiri.com/2018/01/31/postgresql-diesel-rust-types.html", _type)
             };
@@ -116,7 +116,7 @@ pub fn parse(
                 if is_optional {
                     format!("Option<{}>", type_string)
                 } else {
-                    format!("{}", type_string)
+                    type_string.to_string()
                 }
             ));
             count += 1;
@@ -136,10 +136,10 @@ pub fn parse(
                 "            {}: i.get_{}(){},\n",
                 &vec[8],
                 &vec[8],
-                match type_string {
-                    &"string" => ".to_string()",
-                    &"String" => ".to_string()",
-                    &"BigDecimal" => ".to_bigdecimal()",
+                match *type_string {
+                    "string" => ".to_string()",
+                    "String" => ".to_string()",
+                    "BigDecimal" => ".to_bigdecimal()",
                     _ => "",
                 }
             ));
@@ -147,29 +147,25 @@ pub fn parse(
                 "        o.set_{}(i.{}{});\n",
                 &vec[8],
                 &vec[8],
-                match type_string {
-                    &"string" => ".to_string()",
-                    &"String" => ".to_string()",
+                match *type_string {
+                    "string" => ".to_string()",
+                    "String" => ".to_string()",
                     _ => ".into()",
                 }
             ));
             //str_into_proto
             closable = true;
-        } else if cmp.contains("}") {
-            if closable {
-                count = 0;
-                str_model.push_str(&format!("}}\n"));
-                str_proto.push_str(&format!("}}\n"));
+        } else if cmp.contains('}') && closable {
+            count = 0;
+            str_model.push_str("}\n");
+            str_proto.push_str("}\n");
 
-                str_from_proto.push_str(&format!("        }}\n"));
-                str_from_proto.push_str(&format!("    }}\n"));
-
-                str_into_proto.push_str(&format!("        o\n    }}\n"));
-
-                str_from_proto.push_str(&format!("}}\n"));
-                str_into_proto.push_str(&format!("}}\n"));
-                closable = false;
-            }
+            str_from_proto.push_str("        }\n");
+            str_from_proto.push_str("    }\n");
+            str_into_proto.push_str("        o\n    }\n");
+            str_from_proto.push_str("}\n");
+            str_into_proto.push_str("}\n");
+            closable = false;
         }
     }
     (
@@ -232,7 +228,7 @@ mod tests {
             type_ndt,
             type_bd,
         ) = super::parse(get_contents(), "model");
-        println!("str_model {}", str_model);
+        println!("str_proto shows as follow:\n{}", str_proto);
         assert_eq!(str_proto.chars().count(), 220);
         assert_eq!(str_into_proto.chars().count(), 619);
         assert_eq!(str_from_proto.chars().count(), 590);

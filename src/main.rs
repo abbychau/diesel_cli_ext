@@ -51,10 +51,8 @@ fn main() {
         action = "model";
     } else {
         action = &args[1];
-        if action == "into_proto" || action == "from_proto" {
-            if args.len() >= 3 {
-                class_name = &args[2];
-            }
+        if action == "into_proto" || action == "from_proto" && args.len() >= 3 {
+            class_name = &args[2];
         }
     }
 
