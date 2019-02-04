@@ -10,3 +10,5 @@ matrix:
 script:
   - cargo build --verbose --all
   - cargo test --verbose --all
+after_success:
+- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then travis-cargo coveralls --no-sudo --verify; fi
