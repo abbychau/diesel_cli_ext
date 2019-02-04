@@ -19,10 +19,9 @@ before_script:
 script:
 - ! 'travis-cargo build &&
   travis-cargo test &&
-  travis-cargo bench &&
-  travis-cargo --only nightly doc
+  travis-cargo bench
 '
 
 after_success:
 - if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then travis-cargo coveralls --no-sudo --verify; fi
-- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then ./kcov/build/src/kcov --verify --coveralls-id=$TRAVIS_JOB_ID --exclude-pattern=/.cargo target/kcov target/debug/diesel_ext-*; fi
+- if [[ "$TRAVIS_OS_NAME" == "linux" ]]; then ./kcov/build/src/kcov --verify --coveralls-id=$TRAVIS_JOB_ID --exclude-pattern=/.cargo target/kcov target/debug/deps/diesel_ext-*; fi
