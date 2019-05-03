@@ -56,15 +56,29 @@ pub fn parse(
     .iter()
     .cloned()
     .collect();
+    let mut is_schema = false;
     for line in lines {
         let cmp = line.to_string();
+        let vec: Vec<&str> = line.split(' ').collect();
+
         if cmp.contains("#[") || cmp.contains("joinable!(") {
             //do nothing
+        } else if cmp.contains("pub mod ") {
+
+            if is_schema {
+                str_model.push_str("\n}\n");
+            }
+            str_model.push_str(&format!("pub mod {} {{\n", &vec[2]));
+            is_schema = true;
         } else if cmp.contains("table!") {
             str_model.push_str("\n#[derive(Queryable,Debug)]\n");
         } else if cmp.contains(") {") {
-            let vec: Vec<&str> = line.split(' ').collect();
-            struct_name = propercase(vec[4]);
+            //print!("{:?}",vec);
+            struct_name = propercase(vec[4 + if is_schema { 4 } else { 0 }]);
+            if is_schema {
+                let _v: Vec<&str> = struct_name.split('.').collect();
+                struct_name = _v[1].to_string();
+            }
             str_model.push_str(&format!("pub struct {} {{\n", struct_name));
             str_proto.push_str(&format!("message {} {{\n", struct_name));
 
@@ -92,8 +106,8 @@ pub fn parse(
                 struct_name
             ));
         } else if cmp.contains("->") {
-            let vec: Vec<&str> = line.split(' ').collect();
-            let _type = vec[10].replace(",", "");
+            let _type = vec[10 + if is_schema { 4 } else { 0 }].replace(",", "");
+
             let dict = match action {
                 "model" => &model_type_dict,
                 _ => &proto_type_dict,
@@ -156,10 +170,11 @@ pub fn parse(
             //str_into_proto
             closable = true;
         } else if cmp.contains('}') && closable {
+            print!("close");
             count = 0;
             str_model.push_str("}\n");
             str_proto.push_str("}\n");
-
+//" ".repeat(8)
             str_from_proto.push_str("        }\n");
             str_from_proto.push_str("    }\n");
             str_into_proto.push_str("        o\n    }\n");
@@ -168,6 +183,11 @@ pub fn parse(
             closable = false;
         }
     }
+
+    if is_schema {
+        str_model.push_str("\n}\n");
+    }
+
     (
         str_proto,
         str_request,
@@ -237,6 +257,33 @@ mod tests {
         assert_eq!(str_model.chars().count(), 297);
         assert_eq!(type_ndt, true);
         assert_eq!(type_bd, true);
+    }
+
+
+    fn get_contents2() -> String {
+        let mut f = ::std::fs::File::open("test_data/schema_localmodded.rs")
+            .expect("File not found. Please run in the directory with schema.rs.");
+        let mut contents = String::new();
+        f.read_to_string(&mut contents)
+            .expect("Something went wrong reading the file.");
+        contents
+    }
+
+    #[test]
+    fn build_all2() {
+        let (
+            _str_proto,
+            _str_request,
+            _str_rpc,
+            str_model,
+            _str_from_proto,
+            _str_into_proto,
+            type_ndt,
+            type_bd,
+        ) = super::parse(get_contents2(), "model");
+        assert_eq!(str_model.chars().count(), 220);
+        assert_eq!(type_ndt, false);
+        assert_eq!(type_bd, false);
     }
 
 }
