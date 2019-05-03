@@ -11,8 +11,10 @@ It contains 4 functions at this moment.
 2. Generate model rust structs.(`diesel_ext model`)
 3. Generate conversion implementations.(`diesel_ext into_proto`, and `diesel_ext from_proto`)
 
-## How to use
+## Installation
+`cargo install diesel_cli_ext`
 
+## How to use
 First of all, `diesel print-schema > src/schema.rs` 
 
 ### To generate model structs:
