@@ -17,6 +17,32 @@ It contains 4 functions at this moment.
 ## How to use
 First of all, `diesel print-schema > src/schema.rs` 
 
+TL;DR: 
+
+```
+Diesel CLI extension Help
+        
+Usage:
+
+    Generate models:
+        diesel_ext (default, equals to: 'cargo run model')
+        
+        diesel_ext model 
+        (default, equals to: 'cargo run model "Debug,Queryable"')
+
+        diesel_ext model <derives> 
+        (e.g. diesel_ext model "Debug, Queryable, Identifiable, Associations, AsChangeset")
+
+    Generate protos:
+        diesel_ext into_proto <ClassName> (Pick the ClassName you like)
+        diesel_ext from_proto <ClassName> (Pick the ClassName you like)
+```
+
+(You can see it again by `diesel_ext help`)
+
+Output demostrations as below...
+
+
 ### To generate model structs:
 e.g. `diesel_ext > src/db/db_models.rs` , `diesel_ext model > src/models.rs` (it is the default option)
 

@@ -46,7 +46,7 @@ fn main() {
     //Read in
     let args: Vec<_> = env::args().collect();
     let action;
-    let mut derive : Option<&str> = None;
+    let mut derive: Option<&str> = None;
     let mut class_name = "";
     if args.len() < 2 {
         action = "model";
@@ -54,28 +54,9 @@ fn main() {
         action = &args[1];
         if action == "into_proto" || action == "from_proto" && args.len() >= 3 {
             class_name = &args[2];
-        }else{
-            println!("
-Diesel CLI extension Help
-        
-Usage:
-
-    Generate models:
-        diesel_ext (default, equals to: 'cargo run model')
-        
-        diesel_ext model 
-        (default, equals to: 'cargo run model \"Debug,Queryable\"')
-
-        diesel_ext model <derives> 
-        (e.g. diesel_ext model \"Debug, Queryable, Identifiable, Associations, AsChangeset\")
-
-    Generate protos:
-        diesel_ext into_proto <ClassName> (Pick the ClassName you like)
-        diesel_ext from_proto <ClassName> (Pick the ClassName you like)
-            ");
-            ::std::process::exit(0);
+        } else {
+            show_help();
         }
-        
     }
 
     if action == "model" && args.len() == 3 {
@@ -121,7 +102,31 @@ Usage:
             println!("{}", str_into_proto.replace("_name_", class_name));
         }
         _ => {
-            println!("Unknown parameter. Please try proto, model, from_proto, or into_proto");
+            show_help();
         }
     }
+}
+
+fn show_help() {
+    println!(
+        "
+Diesel CLI extension Help
+        
+Usage:
+
+    Generate models:
+        diesel_ext (default, equals to: 'cargo run model')
+        
+        diesel_ext model 
+        (default, equals to: 'cargo run model \"Debug,Queryable\"')
+
+        diesel_ext model <derives> 
+        (e.g. diesel_ext model \"Debug, Queryable, Identifiable, Associations, AsChangeset\")
+
+    Generate protos:
+        diesel_ext into_proto <ClassName> (Pick the ClassName you like)
+        diesel_ext from_proto <ClassName> (Pick the ClassName you like)
+            "
+    );
+    ::std::process::exit(0);
 }

@@ -76,7 +76,7 @@ pub fn parse(
                 " ".repeat(indent_depth),
                 match model_derives {
                     None => "Queryable,Debug",
-                    Some(x) => x
+                    Some(x) => x,
                 }
             ));
         } else if cmp.contains(") {") {
