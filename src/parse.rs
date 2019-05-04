@@ -259,7 +259,7 @@ mod tests {
             str_into_proto,
             type_ndt,
             type_bd,
-        ) = super::parse(get_contents(), "model");
+        ) = super::parse(get_contents(), "model", None);
         println!("str_proto shows as follow:\n{}", str_proto);
         assert_eq!(str_proto.chars().count(), 220);
         assert_eq!(str_into_proto.chars().count(), 619);
@@ -291,7 +291,7 @@ mod tests {
             _str_into_proto,
             type_ndt,
             type_bd,
-        ) = super::parse(get_contents2(), "model");
+        ) = super::parse(get_contents2(), "model", None);
         assert_eq!(str_model.chars().count(), 366);
         assert_eq!(type_ndt, false);
         assert_eq!(type_bd, false);
