@@ -5,6 +5,12 @@ pub mod my_schema {
             some_field -> Text,
         }
     }
+    table! {
+        my_schema.my_table2 (my_pk) {
+            my_pk -> Int4,
+            some_field -> Text,
+        }
+    }
 }
 
 pub mod my_other_schema {

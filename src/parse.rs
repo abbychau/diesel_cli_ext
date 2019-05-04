@@ -60,26 +60,32 @@ pub fn parse(
     for line in lines {
         let cmp = line.to_string();
         let vec: Vec<&str> = line.split(' ').collect();
-
+        let indent_depth = if is_schema { 4 } else { 0 };
         if cmp.contains("#[") || cmp.contains("joinable!(") {
             //do nothing
         } else if cmp.contains("pub mod ") {
-
             if is_schema {
-                str_model.push_str("\n}\n");
+                str_model.push_str("\n}\n\n");
             }
             str_model.push_str(&format!("pub mod {} {{\n", &vec[2]));
             is_schema = true;
         } else if cmp.contains("table!") {
-            str_model.push_str("\n#[derive(Queryable,Debug)]\n");
+            str_model.push_str(&format!(
+                "\n{}#[derive(Queryable,Debug)]\n",
+                " ".repeat(indent_depth)
+            ));
         } else if cmp.contains(") {") {
             //print!("{:?}",vec);
-            struct_name = propercase(vec[4 + if is_schema { 4 } else { 0 }]);
+            struct_name = propercase(vec[4 + indent_depth]);
             if is_schema {
                 let _v: Vec<&str> = struct_name.split('.').collect();
                 struct_name = _v[1].to_string();
             }
-            str_model.push_str(&format!("pub struct {} {{\n", struct_name));
+            str_model.push_str(&format!(
+                "{}pub struct {} {{\n",
+                " ".repeat(indent_depth),
+                struct_name
+            ));
             str_proto.push_str(&format!("message {} {{\n", struct_name));
 
             str_into_proto.push_str(&format!(
@@ -106,7 +112,7 @@ pub fn parse(
                 struct_name
             ));
         } else if cmp.contains("->") {
-            let _type = vec[10 + if is_schema { 4 } else { 0 }].replace(",", "");
+            let _type = vec[10 + indent_depth].replace(",", "");
 
             let dict = match action {
                 "model" => &model_type_dict,
@@ -125,7 +131,8 @@ pub fn parse(
             }
 
             str_model.push_str(&format!(
-                "    pub {}: {},\n",
+                "{}pub {}: {},\n",
+                " ".repeat(indent_depth + 4),
                 &vec[8],
                 if is_optional {
                     format!("Option<{}>", type_string)
@@ -170,11 +177,11 @@ pub fn parse(
             //str_into_proto
             closable = true;
         } else if cmp.contains('}') && closable {
-            print!("close");
             count = 0;
+            str_model.push_str(" ".repeat(indent_depth).as_str());
             str_model.push_str("}\n");
             str_proto.push_str("}\n");
-//" ".repeat(8)
+            //" ".repeat(8)
             str_from_proto.push_str("        }\n");
             str_from_proto.push_str("    }\n");
             str_into_proto.push_str("        o\n    }\n");
@@ -259,7 +266,6 @@ mod tests {
         assert_eq!(type_bd, true);
     }
 
-
     fn get_contents2() -> String {
         let mut f = ::std::fs::File::open("test_data/schema_localmodded.rs")
             .expect("File not found. Please run in the directory with schema.rs.");
@@ -281,7 +287,7 @@ mod tests {
             type_ndt,
             type_bd,
         ) = super::parse(get_contents2(), "model");
-        assert_eq!(str_model.chars().count(), 220);
+        assert_eq!(str_model.chars().count(), 366);
         assert_eq!(type_ndt, false);
         assert_eq!(type_bd, false);
     }
