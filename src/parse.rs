@@ -2,6 +2,7 @@ use std::collections::HashMap;
 pub fn parse(
     contents: String,
     action: &str,
+    model_derives: Option<&str>,
 ) -> (String, String, String, String, String, String, bool, bool) {
     //Parse
     let mut str_model: String = "".to_string();
@@ -71,8 +72,12 @@ pub fn parse(
             is_schema = true;
         } else if cmp.contains("table!") {
             str_model.push_str(&format!(
-                "\n{}#[derive(Queryable,Debug)]\n",
-                " ".repeat(indent_depth)
+                "\n{}#[derive({})]\n",
+                " ".repeat(indent_depth),
+                match model_derives {
+                    None => "Queryable,Debug",
+                    Some(x) => x
+                }
             ));
         } else if cmp.contains(") {") {
             //print!("{:?}",vec);
