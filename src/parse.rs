@@ -6,7 +6,6 @@ pub fn parse(
     action: &str,
     model_derives: Option<&str>,
 ) -> (String, String, String, String, String, String, bool, bool, bool) {
-    let mut warning_for_longer_lifetime: String;
     //Parse
     let mut str_model: String = "".to_string();
     let mut str_proto: String = "".to_string();
@@ -132,6 +131,7 @@ pub fn parse(
                 _ => &proto_type_dict,
             };
             let is_optional = _type.clone().contains("Nullable<");
+            let mut warning_for_longer_lifetime: String;
             let type_string: &str = match dict.get(_type.replace("Nullable<","").replace(">","").trim()) {
                 Some(name)=>name,
                 None=> {
