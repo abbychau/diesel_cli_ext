@@ -34,6 +34,7 @@ pub fn parse(
         ("Jsonb", "Jsonb"),
         ("Uuid", "Uuid"),
         ("Varchar", "String"),
+        ("Bytea", "Vec<u8>"),
     ]
     .iter()
     .cloned()
@@ -53,6 +54,7 @@ pub fn parse(
         ("Json", "string"),
         ("Jsonb", "string"),
         ("Varchar", "string"),
+        ("Bytea", "bytes"),
     ]
     .iter()
     .cloned()
