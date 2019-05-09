@@ -1,3 +1,4 @@
 target/*
 src/schema.rs
 cargo.lock
+.idea/
