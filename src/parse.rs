@@ -1,9 +1,11 @@
 use std::collections::HashMap;
+use std::io::{stderr, Write};
+
 pub fn parse(
     contents: String,
     action: &str,
     model_derives: Option<&str>,
-) -> (String, String, String, String, String, String, bool, bool) {
+) -> (String, String, String, String, String, String, bool, bool, bool) {
     //Parse
     let mut str_model: String = "".to_string();
     let mut str_proto: String = "".to_string();
@@ -15,6 +17,7 @@ pub fn parse(
     let mut closable: bool = false;
     let mut type_ndt: bool = false;
     let mut type_bd: bool = false;
+    let mut type_ip: bool = false;
     let mut count: u16 = 0;
     let mut struct_name: String = "".to_string();
     let lines = contents.split('\n');
@@ -34,6 +37,8 @@ pub fn parse(
         ("Jsonb", "Jsonb"),
         ("Uuid", "Uuid"),
         ("Varchar", "String"),
+        ("Bytea", "Vec<u8>"),
+        ("Inet", "IpNetwork"),
     ]
     .iter()
     .cloned()
@@ -53,6 +58,8 @@ pub fn parse(
         ("Json", "string"),
         ("Jsonb", "string"),
         ("Varchar", "string"),
+        ("Bytea", "bytes"),
+        ("Inet", "string"),
     ]
     .iter()
     .cloned()
@@ -124,15 +131,25 @@ pub fn parse(
                 _ => &proto_type_dict,
             };
             let is_optional = _type.clone().contains("Nullable<");
-            let type_string = match dict.get(_type.replace("Nullable<","").replace(">","").trim()){
+            let mut warning_for_longer_lifetime: String;
+            let type_string: &str = match dict.get(_type.replace("Nullable<","").replace(">","").trim()) {
                 Some(name)=>name,
-                None=> panic!("{} is not recognized. Please free feel to expand the HashMap. This could provide good hints: https://kotiri.com/2018/01/31/postgresql-diesel-rust-types.html", _type)
+                None=> {
+                    // Show a warning and return a placeholder.
+                    stderr().write_all(&format!("{} is not recognized. Please feel free to expand the HashMap. This could provide \
+                    good hints: https://kotiri.com/2018/01/31/postgresql-diesel-rust-types.html\n", _type).into_bytes()).unwrap();
+                    warning_for_longer_lifetime = format!("/* TODO: unknown type {} */", _type);
+                    &warning_for_longer_lifetime[..]
+                }
             };
-            if type_string == &"NaiveDateTime" {
+            if type_string == "NaiveDateTime" {
                 type_ndt = true;
             }
-            if type_string == &"BigDecimal" {
+            if type_string == "BigDecimal" {
                 type_bd = true;
+            }
+            if type_string == "IpNetwork" {
+                type_ip = true;
             }
 
             str_model.push_str(&format!(
@@ -162,7 +179,7 @@ pub fn parse(
                 "            {}: i.get_{}(){},\n",
                 &vec[8],
                 &vec[8],
-                match *type_string {
+                match type_string {
                     "string" => ".to_string()",
                     "String" => ".to_string()",
                     "BigDecimal" => ".to_bigdecimal()",
@@ -173,7 +190,7 @@ pub fn parse(
                 "        o.set_{}(i.{}{});\n",
                 &vec[8],
                 &vec[8],
-                match *type_string {
+                match type_string {
                     "string" => ".to_string()",
                     "String" => ".to_string()",
                     _ => ".into()",
@@ -209,6 +226,7 @@ pub fn parse(
         str_into_proto,
         type_ndt,
         type_bd,
+        type_ip,
     )
 }
 
