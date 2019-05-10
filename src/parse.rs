@@ -257,8 +257,8 @@ fn propercase(s: &str) -> String {
 mod tests {
     use std::io::prelude::*;
 
-    fn get_contents() -> String {
-        let mut f = ::std::fs::File::open("test_data/schema.rs")
+    fn file_get_contents(fname:&str) -> String {
+        let mut f = ::std::fs::File::open(fname)
             .expect("File not found. Please run in the directory with schema.rs.");
         let mut contents = String::new();
         f.read_to_string(&mut contents)
@@ -267,7 +267,7 @@ mod tests {
     }
 
     #[test]
-    fn build_all() {
+    fn build1() {
         let (
             str_proto,
             str_request,
@@ -277,7 +277,8 @@ mod tests {
             str_into_proto,
             type_ndt,
             type_bd,
-        ) = super::parse(get_contents(), "model", None);
+            type_ip
+        ) = super::parse(file_get_contents("test_data/schema.rs"), "model", None);
         println!("str_proto shows as follow:\n{}", str_proto);
         assert_eq!(str_proto.chars().count(), 220);
         assert_eq!(str_into_proto.chars().count(), 619);
@@ -287,19 +288,11 @@ mod tests {
         assert_eq!(str_model.chars().count(), 297);
         assert_eq!(type_ndt, true);
         assert_eq!(type_bd, true);
-    }
-
-    fn get_contents2() -> String {
-        let mut f = ::std::fs::File::open("test_data/schema_localmodded.rs")
-            .expect("File not found. Please run in the directory with schema.rs.");
-        let mut contents = String::new();
-        f.read_to_string(&mut contents)
-            .expect("Something went wrong reading the file.");
-        contents
+        assert_eq!(type_ip, false);
     }
 
     #[test]
-    fn build_all2() {
+    fn build2() {
         let (
             _str_proto,
             _str_request,
@@ -309,10 +302,32 @@ mod tests {
             _str_into_proto,
             type_ndt,
             type_bd,
-        ) = super::parse(get_contents2(), "model", None);
+            type_ip
+        ) = super::parse(file_get_contents("test_data/schema_localmodded.rs"), "model", None);
         assert_eq!(str_model.chars().count(), 366);
         assert_eq!(type_ndt, false);
         assert_eq!(type_bd, false);
+        assert_eq!(type_ip, false);
+    }
+
+    #[test]
+    fn build3() {
+        let (
+            _str_proto,
+            _str_request,
+            _str_rpc,
+            str_model,
+            _str_from_proto,
+            _str_into_proto,
+            type_ndt,
+            type_bd,
+            type_ip
+        ) = super::parse(file_get_contents("test_data/schema_with_ip_bytea.rs"), "model", None);
+        
+        assert_eq!(str_model.chars().count(), 115);
+        assert_eq!(type_ndt, false);
+        assert_eq!(type_bd, false);
+        assert_eq!(type_ip, true);
     }
 
 }
