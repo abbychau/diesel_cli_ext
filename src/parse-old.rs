@@ -1,20 +1,5 @@
 use std::collections::HashMap;
 use std::io::{stderr, Write};
-use nom::{error::ErrorKind, character::complete::alphanumeric1 as alphanumeric, number::complete::recognize_float};
-use nom::number::complete::float;
-
-named!(
-  string<&str>,
-  delimited!(
-    char!('\"'),
-    map_res!(
-      escaped!(call!(alphanumeric), '\\', one_of!("\"n\\")),
-      str::from_utf8
-    ),
-    //map_res!(escaped!(take_while1!(is_alphanumeric), '\\', one_of!("\"n\\")), str::from_utf8),
-    char!('\"')
-  )
-);
 
 pub fn parse(
     contents: String,
