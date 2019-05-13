@@ -1,26 +1,40 @@
 use std::collections::HashMap;
 use std::io::{stderr, Write};
-use nom::{error::ErrorKind, character::complete::alphanumeric1 as alphanumeric, number::complete::recognize_float};
-use nom::number::complete::float;
+use std::str;
+
+use nom::{
+    character::complete::alphanumeric1 as alphanumeric, error::ErrorKind, number::complete::float,
+    number::complete::recognize_float,
+};
 
 named!(
-  string<&str>,
-  delimited!(
-    char!('\"'),
-    map_res!(
-      escaped!(call!(alphanumeric), '\\', one_of!("\"n\\")),
-      str::from_utf8
-    ),
-    //map_res!(escaped!(take_while1!(is_alphanumeric), '\\', one_of!("\"n\\")), str::from_utf8),
-    char!('\"')
-  )
+    string<&str>,
+    delimited!(
+        char!('\"'),
+        map_res!(
+            escaped!(call!(alphanumeric), '\\', one_of!("\"n\\")),
+            str::from_utf8
+        ),
+        //map_res!(escaped!(take_while1!(is_alphanumeric), '\\', one_of!("\"n\\")), str::from_utf8),
+        char!('\"')
+    )
 );
 
 pub fn parse(
     contents: String,
     action: &str,
     model_derives: Option<&str>,
-) -> (String, String, String, String, String, String, bool, bool, bool) {
+) -> (
+    String,
+    String,
+    String,
+    String,
+    String,
+    String,
+    bool,
+    bool,
+    bool,
+) {
     //Parse
     let mut str_model: String = "".to_string();
     let mut str_proto: String = "".to_string();
@@ -147,9 +161,11 @@ pub fn parse(
             };
             let is_optional = _type.clone().contains("Nullable<");
             let mut warning_for_longer_lifetime: String;
-            let type_string: &str = match dict.get(_type.replace("Nullable<","").replace(">","").trim()) {
-                Some(name)=>name,
-                None=> {
+            let type_string: &str = match dict
+                .get(_type.replace("Nullable<", "").replace(">", "").trim())
+            {
+                Some(name) => name,
+                None => {
                     // Show a warning and return a placeholder.
                     stderr().write_all(&format!("{} is not recognized. Please feel free to expand the HashMap. This could provide \
                     good hints: https://kotiri.com/2018/01/31/postgresql-diesel-rust-types.html\n", _type).into_bytes()).unwrap();
@@ -272,7 +288,7 @@ fn propercase(s: &str) -> String {
 mod tests {
     use std::io::prelude::*;
 
-    fn file_get_contents(fname:&str) -> String {
+    fn file_get_contents(fname: &str) -> String {
         let mut f = ::std::fs::File::open(fname)
             .expect("File not found. Please run in the directory with schema.rs.");
         let mut contents = String::new();
@@ -292,7 +308,7 @@ mod tests {
             str_into_proto,
             type_ndt,
             type_bd,
-            type_ip
+            type_ip,
         ) = super::parse(file_get_contents("test_data/schema.rs"), "model", None);
         println!("str_proto shows as follow:\n{}", str_proto);
         assert_eq!(str_proto.chars().count(), 220);
@@ -317,8 +333,12 @@ mod tests {
             _str_into_proto,
             type_ndt,
             type_bd,
-            type_ip
-        ) = super::parse(file_get_contents("test_data/schema_localmodded.rs"), "model", None);
+            type_ip,
+        ) = super::parse(
+            file_get_contents("test_data/schema_localmodded.rs"),
+            "model",
+            None,
+        );
         assert_eq!(str_model.chars().count(), 366);
         assert_eq!(type_ndt, false);
         assert_eq!(type_bd, false);
@@ -336,9 +356,13 @@ mod tests {
             _str_into_proto,
             type_ndt,
             type_bd,
-            type_ip
-        ) = super::parse(file_get_contents("test_data/schema_with_ip_bytea.rs"), "model", None);
-        
+            type_ip,
+        ) = super::parse(
+            file_get_contents("test_data/schema_with_ip_bytea.rs"),
+            "model",
+            None,
+        );
+
         assert_eq!(str_model.chars().count(), 115);
         assert_eq!(type_ndt, false);
         assert_eq!(type_bd, false);
