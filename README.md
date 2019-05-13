@@ -2,7 +2,7 @@
 
 Diesel CLI Extension is a tool-belt that aids Diesel CLI after it built schema.rs .
 
-[![Build Status](https://travis-ci.org/abbychau/diesel_cli_ext.svg)](https://travis-ci.org/diesel_cli_ext/diesel)
+[![Build Status](https://travis-ci.org/abbychau/diesel_cli_ext.svg)](https://travis-ci.org/abbychau/diesel_cli_ext)
 [![Crates.io](https://img.shields.io/crates/v/diesel_cli_ext.svg)](https://crates.io/crates/diesel_cli_ext)
 <!-- [![Coverage Status](https://coveralls.io/repos/github/abbychau/diesel_cli_ext/badge.svg?branch=master)](https://coveralls.io/github/abbychau/diesel_cli_ext?branch=master) -->
 
