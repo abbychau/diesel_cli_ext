@@ -124,7 +124,7 @@ Usage:
         diesel_ext (default, equals to: 'cargo run model')
         
         diesel_ext model 
-        (default, equals to: 'cargo run model \"Debug,Queryable\"')
+        (default, equals to: 'cargo run model \"Debug, Queryable\"')
 
         diesel_ext model <derives> 
         (e.g. diesel_ext model \"Debug, Queryable, Identifiable, Associations, AsChangeset\")

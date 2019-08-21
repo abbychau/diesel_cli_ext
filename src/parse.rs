@@ -82,7 +82,7 @@ pub fn parse(
                 "\n{}#[derive({})]\n",
                 " ".repeat(indent_depth),
                 match model_derives {
-                    None => "Queryable,Debug",
+                    None => "Queryable, Debug",
                     Some(x) => x,
                 }
             ));
