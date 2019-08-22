@@ -1,3 +1,4 @@
+use std::collections::HashMap;
 use getopts::Options;
 use std::env;
 use std::fs::File;
@@ -63,10 +64,12 @@ fn main() {
     opts.optopt("s", "schema-file", "set file path", "PATH");
     opts.optflag("h", "help", "Print this help menu");
     opts.optflag("m", "model", "model output");
+    opts.optmulti("M", "map", "type mappings that could be set multiple times e.g. --map \"BigInt iccc\"", "\"SOURCE-TYPE DEST-TYPE\"");
     opts.optflag("i", "into_proto", "into_proto output");
     opts.optflag("f", "from_proto", "from_proto output");
     opts.optflag("c", "class_name", "proto class name");
     opts.optflag("d", "derive", "set struct derives");
+    // opts.optopt("C", "config", "set config file name sample: https://github.com/abbychau/diesel_cli_ext/blob/master/dce_config.cfg", "PATH");
     opts.optflag(
         "t",
         "add_table_name",
@@ -83,6 +86,16 @@ fn main() {
         return;
     }
     //print!("{:?}",matches.opt_defined("m"));
+
+    let mut type_mapping : HashMap<String,String> = HashMap::new();
+    
+    
+    if matches.opt_present("M") {
+        for x in matches.opt_strs("M") {
+            let k : Vec<&str> = x.trim().split(' ').collect();
+            type_mapping.insert(k[0].to_string(),k[1].to_string());
+        }
+    }
 
     if matches.opt_present("m") {
         action = "model";
@@ -117,7 +130,7 @@ fn main() {
         type_ndt,
         type_bd,
         type_ip,
-    ) = parse::parse(contents, action, derive, matches.opt_present("t"));
+    ) = parse::parse(contents, action, derive, matches.opt_present("t"), &mut type_mapping);
     //Output
 
     match action {

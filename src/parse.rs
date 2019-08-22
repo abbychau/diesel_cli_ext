@@ -6,6 +6,7 @@ pub fn parse(
     action: &str,
     model_derives: Option<String>,
     add_table_name: bool,
+    model_type_mapping: &mut HashMap<String,String>
 ) -> (
     String,
     String,
@@ -32,7 +33,7 @@ pub fn parse(
     let mut count: u16 = 0;
     let mut struct_name: String = "".to_string();
     let lines = contents.split('\n');
-    let model_type_dict: HashMap<&str, &str> = [
+    let mut model_type_dict: HashMap<&str, &str> = [
         ("Int2", "i16"),
         ("Int4", "i32"),
         ("Int8", "i64"),
@@ -54,6 +55,7 @@ pub fn parse(
     .iter()
     .cloned()
     .collect();
+
     let proto_type_dict: HashMap<&str, &str> = [
         ("Int2", "int32"),
         ("Int4", "int32"),
@@ -75,6 +77,11 @@ pub fn parse(
     .iter()
     .cloned()
     .collect();
+
+    for (key,val) in model_type_mapping.iter() {
+        model_type_dict.insert(&key, &val);
+    }
+    
     let mut is_schema = false;
     for line in lines {
         let cmp = line.to_string();
