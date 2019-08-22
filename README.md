@@ -35,7 +35,7 @@ Options:
                         add #[table_name = x] before structs
 ```
 
-(You can see it again by `diesel_ext help`)
+(You can see it again by `diesel_ext --help`)
 
 Output demostrations as below...
 
