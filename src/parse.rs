@@ -6,7 +6,7 @@ pub fn parse(
     action: &str,
     model_derives: Option<String>,
     add_table_name: bool,
-    model_type_mapping: &mut HashMap<String,String>
+    model_type_mapping: &mut HashMap<String, String>,
 ) -> (
     String,
     String,
@@ -78,10 +78,10 @@ pub fn parse(
     .cloned()
     .collect();
 
-    for (key,val) in model_type_mapping.iter() {
+    for (key, val) in model_type_mapping.iter() {
         model_type_dict.insert(&key, &val);
     }
-    
+
     let mut is_schema = false;
     for line in lines {
         let cmp = line.to_string();
@@ -286,6 +286,7 @@ fn propercase(s: &str) -> String {
 
 #[cfg(test)]
 mod tests {
+    use std::collections::HashMap;
     use std::io::prelude::*;
 
     fn file_get_contents(fname: &str) -> String {
@@ -314,6 +315,7 @@ mod tests {
             "model",
             None,
             false,
+            &mut HashMap::default(),
         );
         println!("str_proto shows as follow:\n{}", str_proto);
         assert_eq!(str_proto.chars().count(), 220);
@@ -344,6 +346,7 @@ mod tests {
             "model",
             None,
             false,
+            &mut HashMap::default(),
         );
         assert_eq!(str_model.chars().count(), 369);
         assert_eq!(type_ndt, false);
@@ -368,6 +371,7 @@ mod tests {
             "model",
             None,
             false,
+            &mut HashMap::default(),
         );
 
         assert_eq!(str_model.chars().count(), 116);

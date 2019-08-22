@@ -1,5 +1,5 @@
-use std::collections::HashMap;
 use getopts::Options;
+use std::collections::HashMap;
 use std::env;
 use std::fs::File;
 use std::io::prelude::*;
@@ -64,7 +64,12 @@ fn main() {
     opts.optopt("s", "schema-file", "set file path", "PATH");
     opts.optflag("h", "help", "Print this help menu");
     opts.optflag("m", "model", "model output");
-    opts.optmulti("M", "map", "type mappings that could be set multiple times e.g. --map \"BigInt iccc\"", "\"SOURCE-TYPE DEST-TYPE\"");
+    opts.optmulti(
+        "M",
+        "map",
+        "type mappings that could be set multiple times e.g. --map \"BigInt iccc\"",
+        "\"SOURCE-TYPE DEST-TYPE\"",
+    );
     opts.optflag("i", "into_proto", "into_proto output");
     opts.optflag("f", "from_proto", "from_proto output");
     opts.optflag("c", "class_name", "proto class name");
@@ -87,13 +92,12 @@ fn main() {
     }
     //print!("{:?}",matches.opt_defined("m"));
 
-    let mut type_mapping : HashMap<String,String> = HashMap::new();
-    
-    
+    let mut type_mapping: HashMap<String, String> = HashMap::new();
+
     if matches.opt_present("M") {
         for x in matches.opt_strs("M") {
-            let k : Vec<&str> = x.trim().split(' ').collect();
-            type_mapping.insert(k[0].to_string(),k[1].to_string());
+            let k: Vec<&str> = x.trim().split(' ').collect();
+            type_mapping.insert(k[0].to_string(), k[1].to_string());
         }
     }
 
@@ -102,10 +106,14 @@ fn main() {
         derive = matches.opt_str("d");
     } else if matches.opt_present("i") {
         action = "into_proto";
-        class_name = matches.opt_str("c").unwrap_or("class_name".to_string());
+        class_name = matches
+            .opt_str("c")
+            .unwrap_or_else(|| "class_name".to_string());
     } else if matches.opt_present("f") {
         action = "from_proto";
-        class_name = matches.opt_str("c").unwrap_or("class_name".to_string());
+        class_name = matches
+            .opt_str("c")
+            .unwrap_or_else(|| "class_name".to_string());
     } else {
         //default as m
         action = "model";
@@ -130,7 +138,13 @@ fn main() {
         type_ndt,
         type_bd,
         type_ip,
-    ) = parse::parse(contents, action, derive, matches.opt_present("t"), &mut type_mapping);
+    ) = parse::parse(
+        contents,
+        action,
+        derive,
+        matches.opt_present("t"),
+        &mut type_mapping,
+    );
     //Output
 
     match action {
