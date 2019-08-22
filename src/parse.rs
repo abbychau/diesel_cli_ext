@@ -5,6 +5,7 @@ pub fn parse(
     contents: String,
     action: &str,
     model_derives: Option<String>,
+    add_table_name: bool,
 ) -> (
     String,
     String,
@@ -88,21 +89,32 @@ pub fn parse(
             str_model.push_str(&format!("pub mod {} {{\n", &vec[2]));
             is_schema = true;
         } else if cmp.contains("table!") {
+            // add derives
             str_model.push_str(&format!(
                 "\n{}#[derive({})]\n",
                 " ".repeat(indent_depth),
                 match model_derives.as_ref().map(String::as_str) {
                     Some(x) => x,
-                    None => "Queryable, Debug"
+                    None => "Queryable, Debug",
                 }
             ));
         } else if cmp.contains(") {") {
-            //print!("{:?}",vec);
+            // this line contains table name
             struct_name = propercase(vec[4 + indent_depth]);
             if is_schema {
                 let _v: Vec<&str> = struct_name.split('.').collect();
                 struct_name = _v[1].to_string();
             }
+
+            if add_table_name {
+                // add #[table_name = "name"]
+                str_model.push_str(&format!(
+                    "{}#[table_name = \"{}\"]\n",
+                    " ".repeat(indent_depth),
+                    vec[4 + indent_depth]
+                ));
+            }
+
             str_model.push_str(&format!(
                 "{}pub struct {} {{\n",
                 " ".repeat(indent_depth),
@@ -290,7 +302,12 @@ mod tests {
             type_ndt,
             type_bd,
             type_ip,
-        ) = super::parse(file_get_contents("test_data/schema.rs"), "model", None);
+        ) = super::parse(
+            file_get_contents("test_data/schema.rs"),
+            "model",
+            None,
+            false,
+        );
         println!("str_proto shows as follow:\n{}", str_proto);
         assert_eq!(str_proto.chars().count(), 220);
         assert_eq!(str_into_proto.chars().count(), 619);
@@ -319,6 +336,7 @@ mod tests {
             file_get_contents("test_data/schema_localmodded.rs"),
             "model",
             None,
+            false,
         );
         assert_eq!(str_model.chars().count(), 369);
         assert_eq!(type_ndt, false);
@@ -342,6 +360,7 @@ mod tests {
             file_get_contents("test_data/schema_with_ip_bytea.rs"),
             "model",
             None,
+            false,
         );
 
         assert_eq!(str_model.chars().count(), 116);

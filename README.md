@@ -31,6 +31,8 @@ Options:
     -f, --from_proto    from_proto output
     -c, --class_name    proto class name
     -d, --derive        set struct derives
+    -t, --add_table_name 
+                        add #[table_name = x] before structs
 ```
 
 (You can see it again by `diesel_ext help`)

@@ -67,18 +67,23 @@ fn main() {
     opts.optflag("f", "from_proto", "from_proto output");
     opts.optflag("c", "class_name", "proto class name");
     opts.optflag("d", "derive", "set struct derives");
+    opts.optflag(
+        "t",
+        "add_table_name",
+        "add #[table_name = x] before structs",
+    );
 
     let matches = match opts.parse(&args[1..]) {
         Ok(m) => m,
         Err(f) => panic!(f.to_string()),
     };
-    
+
     if matches.opt_present("h") {
         print_usage(&program, opts);
         return;
     }
     //print!("{:?}",matches.opt_defined("m"));
-    
+
     if matches.opt_present("m") {
         action = "model";
         derive = matches.opt_str("d");
@@ -93,7 +98,7 @@ fn main() {
         action = "model";
         derive = matches.opt_str("d");
     }
-    
+
     let mut f = File::open(match matches.opt_str("s"){
         Some(file2)=>file2,
         None=>"schema.rs".to_string()
@@ -112,9 +117,9 @@ fn main() {
         type_ndt,
         type_bd,
         type_ip,
-    ) = parse::parse(contents, action, derive);
+    ) = parse::parse(contents, action, derive, matches.opt_present("t"));
     //Output
-    
+
     match action {
         "proto" => {
             println!("syntax = \"proto3\";\n\n");
@@ -143,4 +148,3 @@ fn main() {
         }
     }
 }
-
