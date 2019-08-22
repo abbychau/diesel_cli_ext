@@ -1,6 +1,8 @@
+use getopts::Options;
 use std::env;
 use std::fs::File;
 use std::io::prelude::*;
+
 mod parse;
 
 fn print_normal_dependencies(type_ndt: bool, type_bd: bool, type_ip: bool) {
@@ -45,29 +47,57 @@ fn str2bd(istr: &str) -> BigDecimal{{
     }
 }
 
+fn print_usage(program: &str, opts: Options) {
+    let brief = format!("Usage: {} FILE [options]", program);
+    print!("{}", opts.usage(&brief));
+}
+
 fn main() {
     //Read in
-    let args: Vec<_> = env::args().collect();
+    let args: Vec<String> = env::args().collect();
     let action;
-    let mut derive: Option<&str> = None;
-    let mut class_name = "";
-    if args.len() < 2 {
+    let mut derive: Option<String> = None;
+    let mut class_name: String = "".to_string();
+    let program = args[0].clone();
+    let mut opts = Options::new();
+    opts.optopt("s", "schema-file", "set file path", "PATH");
+    opts.optflag("h", "help", "Print this help menu");
+    opts.optflag("m", "model", "model output");
+    opts.optflag("i", "into_proto", "into_proto output");
+    opts.optflag("f", "from_proto", "from_proto output");
+    opts.optflag("c", "class_name", "proto class name");
+    opts.optflag("d", "derive", "set struct derives");
+
+    let matches = match opts.parse(&args[1..]) {
+        Ok(m) => m,
+        Err(f) => panic!(f.to_string()),
+    };
+    
+    if matches.opt_present("h") {
+        print_usage(&program, opts);
+        return;
+    }
+    //print!("{:?}",matches.opt_defined("m"));
+    
+    if matches.opt_present("m") {
         action = "model";
+        derive = matches.opt_str("d");
+    } else if matches.opt_present("i") {
+        action = "into_proto";
+        class_name = matches.opt_str("c").unwrap_or("class_name".to_string());
+    } else if matches.opt_present("f") {
+        action = "from_proto";
+        class_name = matches.opt_str("c").unwrap_or("class_name".to_string());
     } else {
-        action = &args[1];
-        if action == "into_proto" || action == "from_proto" && args.len() >= 3 {
-            class_name = &args[2];
-        } else {
-            show_help();
-        }
+        //default as m
+        action = "model";
+        derive = matches.opt_str("d");
     }
-
-    if action == "model" && args.len() == 3 {
-        derive = Some(&args[2]);
-    }
-
-    let mut f = File::open("schema.rs")
-        .expect("File not found. Please run in the directory with schema.rs.");
+    
+    let mut f = File::open(match matches.opt_str("s"){
+        Some(file2)=>file2,
+        None=>"schema.rs".to_string()
+    }).expect("File not found. Please check the specified file path or run in the directory with schema.rs.");
     let mut contents = String::new();
     f.read_to_string(&mut contents)
         .expect("Something went wrong reading the file.");
@@ -84,6 +114,7 @@ fn main() {
         type_ip,
     ) = parse::parse(contents, action, derive);
     //Output
+    
     match action {
         "proto" => {
             println!("syntax = \"proto3\";\n\n");
@@ -101,38 +132,15 @@ fn main() {
         "from_proto" => {
             print_conversion_dependencies();
             print_conversion_methods(type_ndt, type_bd);
-            println!("{}", str_from_proto.replace("_name_", class_name));
+            println!("{}", str_from_proto.replace("_name_", &class_name));
         }
         "into_proto" => {
             print_conversion_dependencies();
-            println!("{}", str_into_proto.replace("_name_", class_name));
+            println!("{}", str_into_proto.replace("_name_", &class_name));
         }
         _ => {
-            show_help();
+            print_usage(&program, opts);
         }
     }
 }
 
-fn show_help() {
-    println!(
-        "
-Diesel CLI extension Help
-        
-Usage:
-
-    Generate models:
-        diesel_ext (default, equals to: 'cargo run model')
-        
-        diesel_ext model 
-        (default, equals to: 'cargo run model \"Debug, Queryable\"')
-
-        diesel_ext model <derives> 
-        (e.g. diesel_ext model \"Debug, Queryable, Identifiable, Associations, AsChangeset\")
-
-    Generate protos:
-        diesel_ext into_proto <ClassName> (Pick the ClassName you like)
-        diesel_ext from_proto <ClassName> (Pick the ClassName you like)
-            "
-    );
-    ::std::process::exit(0);
-}

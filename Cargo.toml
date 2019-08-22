@@ -16,6 +16,7 @@ name = "diesel_ext"
 path = "src/main.rs"
 
 [dependencies]
+getopts = "0.2"
 
 [badges]
 maintenance = { status = "actively-developed" }
