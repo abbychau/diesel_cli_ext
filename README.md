@@ -20,22 +20,17 @@ First of all, `diesel print-schema > src/schema.rs`
 TL;DR: 
 
 ```
-Diesel CLI extension Help
-        
-Usage:
+Usage: diesel_ext FILE [options]
 
-    Generate models:
-        diesel_ext (default, equals to: 'cargo run model')
-        
-        diesel_ext model 
-        (default, equals to: 'cargo run model "Debug, Queryable"')
-
-        diesel_ext model <derives> 
-        (e.g. diesel_ext model "Debug, Queryable, Identifiable, Associations, AsChangeset")
-
-    Generate protos:
-        diesel_ext into_proto <ClassName> (Pick the ClassName you like)
-        diesel_ext from_proto <ClassName> (Pick the ClassName you like)
+Options:
+    -s, --schema-file PATH
+                        set file path
+    -h, --help          Print this help menu
+    -m, --model         model output
+    -i, --into_proto    into_proto output
+    -f, --from_proto    from_proto output
+    -c, --class_name    proto class name
+    -d, --derive        set struct derives
 ```
 
 (You can see it again by `diesel_ext help`)
@@ -101,7 +96,7 @@ service MessageRpc {
 ```
 
 ### To generate proto conversions:
-`diesel_ext from_proto class_name > proto/src/conversion/from_proto.rs`, `diesel_ext into_proto class_name > proto/src/conversion/into_proto.rs`
+`diesel_ext -f class_name > proto/src/conversion/from_proto.rs`, `diesel_ext -i class_name > proto/src/conversion/into_proto.rs`
 
 (if you omit the second parameter, names will be displayed as `_name_` for your search and replace.)
 
