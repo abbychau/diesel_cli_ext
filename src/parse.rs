@@ -32,7 +32,8 @@ pub fn parse(
     let mut type_ip: bool = false;
     let mut count: u16 = 0;
     let mut struct_name: String = "".to_string();
-    let lines = contents.split('\n');
+    let content = contents.replace('\t', "    ");
+    let lines = content.split('\n');
     let mut model_type_dict: HashMap<&str, &str> = [
         ("Int2", "i16"),
         ("Int4", "i32"),
@@ -380,4 +381,25 @@ mod tests {
         assert_eq!(type_ip, true);
     }
 
+    #[test]
+    fn build_with_tab() {
+        let (
+            _str_proto,
+            _str_request,
+            _str_rpc,
+            str_model,
+            _str_from_proto,
+            _str_into_proto,
+            _type_ndt,
+            _type_bd,
+            _type_ip,
+        ) = super::parse(
+            file_get_contents("test_data/schema_with_tab.rs"),
+            "model",
+            None,
+            false,
+            &mut HashMap::default(),
+        );
+        assert_eq!(str_model.chars().count(), 86);
+    }
 }

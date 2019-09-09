@@ -73,7 +73,7 @@ fn main() {
     opts.optflag("i", "into_proto", "into_proto output");
     opts.optflag("f", "from_proto", "from_proto output");
     opts.optflag("c", "class_name", "proto class name");
-    opts.optflag("d", "derive", "set struct derives");
+    opts.optopt("d", "derive", "set struct derives", "DERIVES");
     // opts.optopt("C", "config", "set config file name sample: https://github.com/abbychau/diesel_cli_ext/blob/master/dce_config.cfg", "PATH");
     opts.optflag(
         "t",
