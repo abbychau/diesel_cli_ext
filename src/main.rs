@@ -3,8 +3,24 @@ use std::collections::HashMap;
 use std::env;
 use std::fs::File;
 use std::io::prelude::*;
+use std::path::Path;
+use toml::Value;
 
 mod parse;
+
+/// Derive a formatted message from a set of options.
+pub fn custom_opts_usage(iopts: Options, brief: &str) -> String {
+    iopts.usage_with_format(|opts| {
+        let full_param = opts.collect::<Vec<String>>();
+        format!(
+            "{}\n\nCommon Options:\n{}\n\nModel Options:\n{}\n\nProto Options:\n{}\n",
+            brief,
+            full_param[0..2].join("\n"),
+            full_param[2..6].join("\n"),
+            full_param[6..9].join("\n"),
+        )
+    })
+}
 
 fn print_normal_dependencies(type_ndt: bool, type_bd: bool, type_ip: bool) {
     if type_ndt {
@@ -50,7 +66,7 @@ fn str2bd(istr: &str) -> BigDecimal{{
 
 fn print_usage(program: &str, opts: Options) {
     let brief = format!("Usage: {} FILE [options]", program);
-    print!("{}", opts.usage(&brief));
+    print!("{}", custom_opts_usage(opts, &brief));
 }
 
 fn main() {
@@ -61,25 +77,26 @@ fn main() {
     let mut class_name: String = "".to_string();
     let program = args[0].clone();
     let mut opts = Options::new();
-    opts.optopt("s", "schema-file", "set file path", "PATH");
+    opts.optopt("s", "schema-file", "Set schema file path", "PATH");
     opts.optflag("h", "help", "Print this help menu");
-    opts.optflag("m", "model", "model output");
+
+    opts.optflag("m", "model", "Set as model output");
     opts.optmulti(
         "M",
         "map",
-        "type mappings that could be set multiple times e.g. --map \"BigInt iccc\"",
-        "\"SOURCE-TYPE DEST-TYPE\"",
+        "Set type mappings (can be set multiple times) e.g. --map \"BigInt iccc\"",
+        "\"FROM_TYPE TO_TYPE\"",
     );
-    opts.optflag("i", "into_proto", "into_proto output");
-    opts.optflag("f", "from_proto", "from_proto output");
-    opts.optflag("c", "class_name", "proto class name");
     opts.optopt("d", "derive", "set struct derives", "DERIVES");
-    // opts.optopt("C", "config", "set config file name sample: https://github.com/abbychau/diesel_cli_ext/blob/master/dce_config.cfg", "PATH");
     opts.optflag(
         "t",
         "add_table_name",
-        "add #[table_name = x] before structs",
+        "Add #[table_name = x] before structs",
     );
+
+    opts.optflag("i", "into_proto", "Set as into_proto output");
+    opts.optflag("f", "from_proto", "Set as from_proto output");
+    opts.optopt("c", "class_name", "Set proto class name", "CLASS_NAME");
 
     let matches = match opts.parse(&args[1..]) {
         Ok(m) => m,
@@ -120,10 +137,34 @@ fn main() {
         derive = matches.opt_str("d");
     }
 
-    let mut f = File::open(match matches.opt_str("s"){
-        Some(file2)=>file2,
-        None=>"schema.rs".to_string()
-    }).expect("File not found. Please check the specified file path or run in the directory with schema.rs.");
+    let path = match matches.opt_str("s") {
+        Some(file2) => file2,
+        None => {
+            if Path::new("diesel.toml").exists() {
+                // println!("Found diesel.toml, using the file value inside.");
+                let mut toml_f = File::open("diesel.toml").unwrap();
+                let mut contents = String::new();
+                toml_f
+                    .read_to_string(&mut contents)
+                    .expect("diesel.toml exists but not readable");
+                let values = contents.parse::<Value>().unwrap();
+                let file_path = values["print_schema"]["file"].to_string().replace("\"", "");
+                if !Path::new(&file_path).exists() {
+                    print!(
+                        "Found diesel.toml and read a path: {}. However, this file does not exist.",
+                        file_path
+                    );
+                    std::process::exit(1);
+                }
+                values["print_schema"]["file"].as_str().unwrap().to_string()
+            } else {
+                "schema.rs".to_string()
+            }
+        }
+    };
+
+    let mut f = File::open(path).expect("Schema file not found. Please check the specified file path or run in the directory with schema.rs / diesel.toml.");
+
     let mut contents = String::new();
     f.read_to_string(&mut contents)
         .expect("Something went wrong reading the file.");
