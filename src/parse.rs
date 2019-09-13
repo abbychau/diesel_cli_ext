@@ -88,6 +88,7 @@ pub fn parse(
         let cmp = line.to_string();
         let vec: Vec<&str> = line.split(' ').collect();
         let indent_depth = if is_schema { 4 } else { 0 };
+
         if cmp.contains("#[") || cmp.contains("joinable!(") {
             //do nothing
         } else if cmp.contains("pub mod ") {
@@ -112,6 +113,23 @@ pub fn parse(
             if is_schema {
                 let _v: Vec<&str> = struct_name.split('.').collect();
                 struct_name = _v[1].to_string();
+            }
+            let x: &[_] = &['(', ')', '{', '}', ',', ' '];
+            let mut pks_list: Vec<String> = vec![];
+            if vec.len() - 1 > 5 {
+                for i in 5..vec.len() - 1 {
+                    let pks = vec[i].trim_matches(x);
+                    pks_list.push(pks.to_string());
+                }
+
+                if (model_derives.is_some()
+                    && model_derives.clone().unwrap().contains("Identifiable"))
+                    && (pks_list.len() > 1 || pks_list[0] != "id".to_string())
+                {
+                    str_model.push_str("#[primary_key(");
+                    str_model.push_str(&pks_list.join(", "));
+                    str_model.push_str(")];\n");
+                }
             }
 
             if add_table_name {
@@ -284,7 +302,7 @@ fn propercase(s: &str) -> String {
             if store.last() == Some(&'i') {
                 store.pop();
                 store.push('y');
-            }else{
+            } else {
                 store.push('e');
             }
         }
@@ -307,7 +325,7 @@ mod tests {
     }
 
     #[test]
-    fn build1() {
+    fn build_normal() {
         let (
             str_proto,
             str_request,
@@ -326,19 +344,20 @@ mod tests {
             &mut HashMap::default(),
         );
         println!("str_proto shows as follow:\n{}", str_proto);
-        assert_eq!(str_proto.chars().count(), 220);
-        assert_eq!(str_into_proto.chars().count(), 619);
-        assert_eq!(str_from_proto.chars().count(), 590);
+        assert_eq!(str_proto.chars().count(), 237);
+        assert_eq!(str_into_proto.chars().count(), 652);
+        assert_eq!(str_from_proto.chars().count(), 620);
         assert_eq!(str_request.chars().count(), 109);
         assert_eq!(str_rpc.chars().count(), 151);
-        assert_eq!(str_model.chars().count(), 299);
+        println!("str_model shows as follow:\n{}", str_model);
+        assert_eq!(str_model.chars().count(), 317);
         assert_eq!(type_ndt, true);
         assert_eq!(type_bd, true);
         assert_eq!(type_ip, false);
     }
 
     #[test]
-    fn build2() {
+    fn build_with_localmodded() {
         let (
             _str_proto,
             _str_request,
@@ -363,7 +382,7 @@ mod tests {
     }
 
     #[test]
-    fn build3() {
+    fn build_with_ip_bytea() {
         let (
             _str_proto,
             _str_request,
@@ -431,5 +450,27 @@ mod tests {
         );
         // print!("{}",str_model);
         assert_eq!(str_model.chars().count(), 117);
+    }
+    #[test]
+    fn build_with_identifiable() {
+        let (
+            _str_proto,
+            _str_request,
+            _str_rpc,
+            str_model,
+            _str_from_proto,
+            _str_into_proto,
+            _type_ndt,
+            _type_bd,
+            _type_ip,
+        ) = super::parse(
+            file_get_contents("test_data/schema.rs"),
+            "model",
+            Some("Identifiable".to_string()),
+            false,
+            &mut HashMap::default(),
+        );
+        print!("{}",str_model);
+        assert_eq!(str_model.chars().count(), 363);
     }
 }

@@ -9,6 +9,7 @@ table! {
 table! {
     orders (id1, id2) {
         id1 -> BigInt,
+        id2 -> BigInt,
         time -> Timestamp,
         time2 -> Timestamptz,
         json -> Text,
