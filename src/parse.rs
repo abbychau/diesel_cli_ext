@@ -265,7 +265,6 @@ pub fn parse(
 fn propercase(s: &str) -> String {
     let mut next_cap = true;
     let mut store: Vec<char> = Vec::new();
-    let mut last_char: char = ' ';
     for c in s.chars() {
         if c == '_' {
             next_cap = true;
@@ -277,10 +276,18 @@ fn propercase(s: &str) -> String {
         } else {
             store.push(c);
         }
-        last_char = c;
     }
-    if last_char == 's' {
+    if store.last() == Some(&'s') {
         store.pop();
+        if store.last() == Some(&'e') {
+            store.pop();
+            if store.last() == Some(&'i') {
+                store.pop();
+                store.push('y');
+            }else{
+                store.push('e');
+            }
+        }
     }
     store.into_iter().collect()
 }
@@ -401,5 +408,28 @@ mod tests {
             &mut HashMap::default(),
         );
         assert_eq!(str_model.chars().count(), 86);
+    }
+
+    #[test]
+    fn build_with_ies() {
+        let (
+            _str_proto,
+            _str_request,
+            _str_rpc,
+            str_model,
+            _str_from_proto,
+            _str_into_proto,
+            _type_ndt,
+            _type_bd,
+            _type_ip,
+        ) = super::parse(
+            file_get_contents("test_data/schema_with_ies.rs"),
+            "model",
+            None,
+            false,
+            &mut HashMap::default(),
+        );
+        // print!("{}",str_model);
+        assert_eq!(str_model.chars().count(), 117);
     }
 }
