@@ -17,6 +17,8 @@ pub fn parse(
     bool,
     bool,
     bool,
+    bool,
+    bool,
 ) {
     //Parse
     let mut str_model: String = "".to_string();
@@ -27,9 +29,8 @@ pub fn parse(
     let mut str_rpc: String = "".to_string();
     let mut str_request: String = "".to_string();
     let mut closable: bool = false;
-    let mut type_ndt: bool = false;
-    let mut type_bd: bool = false;
-    let mut type_ip: bool = false;
+    let (mut type_ndt, mut type_bd,mut type_ip,mut type_uuid, mut type_tz) = (false,false,false,false,false);
+
     let mut count: u16 = 0;
     let mut struct_name: String = "".to_string();
     let content = contents.replace('\t', "    ");
@@ -43,7 +44,7 @@ pub fn parse(
         ("Text", "String"),
         ("Date", "NaiveDate"),
         ("Timestamp", "NaiveDateTime"),
-        ("Timestamptz", "NaiveDateTime"),
+        ("Timestamptz", "DateTime<Utc>"),
         ("Float4", "f32"),
         ("Bool", "bool"),
         ("Json", "Json"),
@@ -74,6 +75,7 @@ pub fn parse(
         ("Varchar", "string"),
         ("Bytea", "bytes"),
         ("Inet", "string"),
+        ("Uuid", "string"),
     ]
     .iter()
     .cloned()
@@ -128,7 +130,7 @@ pub fn parse(
                 {
                     str_model.push_str("#[primary_key(");
                     str_model.push_str(&pks_list.join(", "));
-                    str_model.push_str(")];\n");
+                    str_model.push_str(")]\n");
                 }
             }
 
@@ -201,7 +203,12 @@ pub fn parse(
             if type_string == "IpNetwork" {
                 type_ip = true;
             }
-
+            if type_string == "Uuid" {
+                type_uuid = true;
+            }
+            if type_string == "DateTime<Utc>" {
+                type_tz = true;
+            }
             str_model.push_str(&format!(
                 "{}pub {}: {},\n",
                 " ".repeat(indent_depth + 4),
@@ -277,6 +284,8 @@ pub fn parse(
         type_ndt,
         type_bd,
         type_ip,
+        type_uuid,
+        type_tz,
     )
 }
 
@@ -336,6 +345,8 @@ mod tests {
             type_ndt,
             type_bd,
             type_ip,
+            type_uuid,
+            type_tz
         ) = super::parse(
             file_get_contents("test_data/schema.rs"),
             "model",
@@ -354,6 +365,8 @@ mod tests {
         assert_eq!(type_ndt, true);
         assert_eq!(type_bd, true);
         assert_eq!(type_ip, false);
+        assert_eq!(type_uuid, false);
+        assert_eq!(type_tz, true);
     }
 
     #[test]
@@ -368,6 +381,8 @@ mod tests {
             type_ndt,
             type_bd,
             type_ip,
+            type_uuid,
+            type_tz,
         ) = super::parse(
             file_get_contents("test_data/schema_localmodded.rs"),
             "model",
@@ -379,6 +394,8 @@ mod tests {
         assert_eq!(type_ndt, false);
         assert_eq!(type_bd, false);
         assert_eq!(type_ip, false);
+        assert_eq!(type_uuid, false);
+        assert_eq!(type_tz, false);
     }
 
     #[test]
@@ -393,6 +410,8 @@ mod tests {
             type_ndt,
             type_bd,
             type_ip,
+            type_uuid,
+            type_tz,
         ) = super::parse(
             file_get_contents("test_data/schema_with_ip_bytea.rs"),
             "model",
@@ -405,6 +424,8 @@ mod tests {
         assert_eq!(type_ndt, false);
         assert_eq!(type_bd, false);
         assert_eq!(type_ip, true);
+        assert_eq!(type_uuid, false);
+        assert_eq!(type_tz, false);
     }
 
     #[test]
@@ -419,6 +440,8 @@ mod tests {
             _type_ndt,
             _type_bd,
             _type_ip,
+            _type_uuid,
+            _type_tz,
         ) = super::parse(
             file_get_contents("test_data/schema_with_tab.rs"),
             "model",
@@ -441,6 +464,8 @@ mod tests {
             _type_ndt,
             _type_bd,
             _type_ip,
+            _type_uuid,
+            _type_tz,
         ) = super::parse(
             file_get_contents("test_data/schema_with_ies.rs"),
             "model",
@@ -463,6 +488,8 @@ mod tests {
             _type_ndt,
             _type_bd,
             _type_ip,
+            _type_uuid,
+            _type_tz,
         ) = super::parse(
             file_get_contents("test_data/schema.rs"),
             "model",
@@ -470,7 +497,32 @@ mod tests {
             false,
             &mut HashMap::default(),
         );
-        print!("{}",str_model);
-        assert_eq!(str_model.chars().count(), 363);
+        print!("{}", str_model);
+        assert_eq!(str_model.chars().count(), 361);
+    }
+    #[test]
+    fn build_with_uuid() {
+        let (
+            _str_proto,
+            _str_request,
+            _str_rpc,
+            str_model,
+            _str_from_proto,
+            _str_into_proto,
+            _type_ndt,
+            _type_bd,
+            _type_ip,
+            type_uuid,
+            _type_tz,
+        ) = super::parse(
+            file_get_contents("test_data/schema_uuid.rs"),
+            "model",
+            None,
+            false,
+            &mut HashMap::default(),
+        );
+        print!("{}", str_model);
+        assert_eq!(type_uuid, true);
+        assert_eq!(str_model.chars().count(), 143);
     }
 }

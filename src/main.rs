@@ -22,7 +22,7 @@ pub fn custom_opts_usage(iopts: Options, brief: &str) -> String {
     })
 }
 
-fn print_normal_dependencies(type_ndt: bool, type_bd: bool, type_ip: bool) {
+fn print_normal_dependencies(type_ndt: bool, type_bd: bool, type_ip: bool, type_uuid: bool, type_tz:bool) {
     if type_ndt {
         println!("use chrono::NaiveDateTime;");
     }
@@ -31,6 +31,13 @@ fn print_normal_dependencies(type_ndt: bool, type_bd: bool, type_ip: bool) {
     }
     if type_ip {
         println!("use ipnetwork::IpNetwork;");
+    }
+    if type_uuid {
+        println!("use uuid::Uuid;");
+    }
+    if type_tz {
+        println!("use chrono::DateTime;");
+        println!("use chrono::offset::Utc;");
     }
 }
 fn print_conversion_dependencies() {
@@ -96,7 +103,7 @@ fn main() {
     opts.optopt("d", "derive", "set struct derives", "DERIVES");
     opts.optflag(
         "t",
-        "add_table_name",
+        "add-table-name",
         "Add #[table_name = x] before structs",
     );
 
@@ -185,6 +192,8 @@ fn main() {
         type_ndt,
         type_bd,
         type_ip,
+        type_uuid,
+        type_tz,
     ) = parse::parse(
         contents,
         action,
@@ -216,7 +225,7 @@ fn main() {
             println!("#![allow(clippy::all)]\n");
 
             println!("{}", import_type_string);
-            print_normal_dependencies(type_ndt, type_bd, type_ip);
+            print_normal_dependencies(type_ndt, type_bd, type_ip, type_uuid, type_tz);
             println!("{}", str_model);
         }
         "from_proto" => {
