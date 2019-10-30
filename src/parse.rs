@@ -38,7 +38,9 @@ pub fn parse(
     let lines = content.split('\n');
     let mut model_type_dict: HashMap<&str, &str> = [
         ("Int2", "i16"),
+        ("SmallInt", "i16"), //sqlite
         ("Int4", "i32"),
+        ("Integer", "i32"), //sqlite
         ("Int8", "i64"),
         ("BigInt", "i64"),
         ("Numeric", "BigDecimal"),
@@ -47,6 +49,7 @@ pub fn parse(
         ("Timestamp", "NaiveDateTime"),
         ("Timestamptz", "DateTime<Utc>"),
         ("Float4", "f32"),
+        ("Float", "f32"), //sqlite
         ("Bool", "bool"),
         ("Json", "Json"),
         ("Jsonb", "Jsonb"),
