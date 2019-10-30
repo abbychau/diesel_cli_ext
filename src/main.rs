@@ -22,7 +22,13 @@ pub fn custom_opts_usage(iopts: Options, brief: &str) -> String {
     })
 }
 
-fn print_normal_dependencies(type_ndt: bool, type_bd: bool, type_ip: bool, type_uuid: bool, type_tz:bool) {
+fn print_normal_dependencies(
+    type_ndt: bool,
+    type_bd: bool,
+    type_ip: bool,
+    type_uuid: bool,
+    type_tz: bool,
+) {
     if type_ndt {
         println!("use chrono::NaiveDateTime;");
     }

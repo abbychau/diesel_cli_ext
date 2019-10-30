@@ -29,7 +29,8 @@ pub fn parse(
     let mut str_rpc: String = "".to_string();
     let mut str_request: String = "".to_string();
     let mut closable: bool = false;
-    let (mut type_ndt, mut type_bd,mut type_ip,mut type_uuid, mut type_tz) = (false,false,false,false,false);
+    let (mut type_ndt, mut type_bd, mut type_ip, mut type_uuid, mut type_tz) =
+        (false, false, false, false, false);
 
     let mut count: u16 = 0;
     let mut struct_name: String = "".to_string();
@@ -181,9 +182,13 @@ pub fn parse(
                 _ => &proto_type_dict,
             };
             let is_optional = _type.clone().contains("Nullable<");
-            let mut warning_for_longer_lifetime: String;
+            let vec_count = _type.clone().matches("[").count();
+            let b_position = _type.find("[").unwrap_or(_type.len());
+            let mut single_type = _type.clone();
+            single_type.truncate(b_position);
+            let warning_for_longer_lifetime: String;
             let type_string: &str = match dict
-                .get(_type.replace("Nullable<", "").replace(">", "").trim())
+                .get(single_type.replace("Nullable<", "").replace(">", "").trim())
             {
                 Some(name) => name,
                 None => {
@@ -209,14 +214,20 @@ pub fn parse(
             if type_string == "DateTime<Utc>" {
                 type_tz = true;
             }
+            let type_with_vec_wrap = format!(
+                "{}{}{}",
+                "Vec<".repeat(vec_count),
+                type_string,
+                ">".repeat(vec_count)
+            );
             str_model.push_str(&format!(
                 "{}pub {}: {},\n",
                 " ".repeat(indent_depth + 4),
                 &vec[8],
                 if is_optional {
-                    format!("Option<{}>", type_string)
+                    format!("Option<{}>", type_with_vec_wrap)
                 } else {
-                    type_string.to_string()
+                    type_with_vec_wrap
                 }
             ));
             count += 1;
@@ -346,7 +357,7 @@ mod tests {
             type_bd,
             type_ip,
             type_uuid,
-            type_tz
+            type_tz,
         ) = super::parse(
             file_get_contents("test_data/schema.rs"),
             "model",
@@ -355,13 +366,13 @@ mod tests {
             &mut HashMap::default(),
         );
         println!("str_proto shows as follow:\n{}", str_proto);
-        assert_eq!(str_proto.chars().count(), 237);
-        assert_eq!(str_into_proto.chars().count(), 652);
-        assert_eq!(str_from_proto.chars().count(), 620);
+        assert_eq!(str_proto.chars().count(), 266);
+        assert_eq!(str_into_proto.chars().count(), 708);
+        assert_eq!(str_from_proto.chars().count(), 680);
         assert_eq!(str_request.chars().count(), 109);
         assert_eq!(str_rpc.chars().count(), 151);
         println!("str_model shows as follow:\n{}", str_model);
-        assert_eq!(str_model.chars().count(), 317);
+        assert_eq!(str_model.chars().count(), 365);
         assert_eq!(type_ndt, true);
         assert_eq!(type_bd, true);
         assert_eq!(type_ip, false);
@@ -498,7 +509,6 @@ mod tests {
             &mut HashMap::default(),
         );
         print!("{}", str_model);
-        assert_eq!(str_model.chars().count(), 361);
     }
     #[test]
     fn build_with_uuid() {
