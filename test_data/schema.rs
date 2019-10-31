@@ -3,7 +3,7 @@ table! {
         account_id -> BigInt,
         debit -> Numeric,
         description -> Nullable<Text>,
-        description2 -> Nullable<Text>[][],
+        description2 -> Nullable<Array<Text>>,
     }
 }
 

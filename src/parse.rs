@@ -185,13 +185,13 @@ pub fn parse(
                 _ => &proto_type_dict,
             };
             let is_optional = _type.clone().contains("Nullable<");
-            let vec_count = _type.clone().matches("[").count();
+            let vec_count = _type.clone().matches("Array").count();
             let b_position = _type.find("[").unwrap_or(_type.len());
             let mut single_type = _type.clone();
             single_type.truncate(b_position);
             let warning_for_longer_lifetime: String;
             let type_string: &str = match dict
-                .get(single_type.replace("Nullable<", "").replace(">", "").trim())
+                .get(single_type.replace("Array<","").replace("Nullable<", "").replace(">", "").trim())
             {
                 Some(name) => name,
                 None => {
@@ -375,7 +375,7 @@ mod tests {
         assert_eq!(str_request.chars().count(), 109);
         assert_eq!(str_rpc.chars().count(), 151);
         println!("str_model shows as follow:\n{}", str_model);
-        assert_eq!(str_model.chars().count(), 365);
+        assert_eq!(str_model.chars().count(), 360);
         assert_eq!(type_ndt, true);
         assert_eq!(type_bd, true);
         assert_eq!(type_ip, false);
