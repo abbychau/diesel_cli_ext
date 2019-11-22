@@ -90,6 +90,7 @@ pub fn parse(
     }
 
     let mut is_schema = false;
+    // let mut is_excluding = true;
     for line in lines {
         let cmp = line.to_string();
         let vec: Vec<&str> = line.split(' ').collect();

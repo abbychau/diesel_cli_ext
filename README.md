@@ -20,19 +20,32 @@ First of all, `diesel print-schema > src/schema.rs`
 TL;DR: 
 
 ```
-Usage: diesel_ext FILE [options]
+Usage: target/debug/diesel_ext FILE [options]
 
-Options:
+Common Options:
     -s, --schema-file PATH
-                        set file path
+                        Set schema file path
     -h, --help          Print this help menu
-    -m, --model         model output
-    -i, --into_proto    into_proto output
-    -f, --from_proto    from_proto output
-    -c, --class_name    proto class name
-    -d, --derive        set struct derives
+
+Model Options:
+    -m, --model         Set as model output
+    -M, --map "FROM_TYPE TO_TYPE"
+                        Set type mappings (can be set multiple times) e.g.
+                        --map "BigInt iccc"
+    -I, --import-types "TYPE"
+                        This field adds use statements to the top of every
+                        table! declaration. (can be set multiple times) e.g.
+                        --import_types "diesel::sql_types::*"
+    -d, --derive DERIVES
+                        set struct derives
     -t, --add-table-name 
-                        add #[table_name = x] before structs
+                        Add #[table_name = x] before structs
+
+Proto Options:
+    -i, --into_proto    Set as into_proto output
+    -f, --from_proto    Set as from_proto output
+    -c, --class_name CLASS_NAME
+                        Set proto class name
 ```
 
 (You can see it again by `diesel_ext --help`)
