@@ -113,6 +113,7 @@ fn main() {
         "Add #[table_name = x] before structs",
     );
 
+    opts.optflag("p", "proto", "Set as proto output");
     opts.optflag("i", "into_proto", "Set as into_proto output");
     opts.optflag("f", "from_proto", "Set as from_proto output");
     opts.optopt("c", "class_name", "Set proto class name", "CLASS_NAME");
@@ -150,6 +151,8 @@ fn main() {
         class_name = matches
             .opt_str("c")
             .unwrap_or_else(|| "class_name".to_string());
+    } else if matches.opt_present("p") {
+        action = "proto";
     } else {
         //default as m
         action = "model";
