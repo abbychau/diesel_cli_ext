@@ -25,7 +25,6 @@ pub fn parse(
     let mut str_proto: String = "".to_string();
     let mut str_from_proto: String = "".to_string();
     let mut str_into_proto: String = "".to_string();
-
     let mut str_rpc: String = "".to_string();
     let mut str_request: String = "".to_string();
     let mut closable: bool = false;
@@ -109,10 +108,13 @@ pub fn parse(
             str_model.push_str(&format!(
                 "\n{}#[derive({})]\n",
                 " ".repeat(indent_depth),
-                match model_derives.as_ref().map(String::as_str) {
-                    Some(x) => x,
-                    None => "Queryable, Debug",
-                }
+                &format!(
+                    "{}{{trace1}}",
+                    match model_derives.as_ref().map(String::as_str) {
+                        Some(x) => x,
+                        None => "Queryable, Debug",
+                    }
+                )
             ));
         } else if cmp.contains(") {") {
             // this line contains table name
@@ -123,16 +125,26 @@ pub fn parse(
             }
             let x: &[_] = &['(', ')', '{', '}', ',', ' '];
             let mut pks_list: Vec<String> = vec![];
-            if vec.len() - 1 > 5 {
-                for i in 5..vec.len() - 1 {
+            if vec.len() - 1 > 5 + indent_depth {
+                for i in 5 + indent_depth..vec.len() - 1 {
                     let pks = vec[i].trim_matches(x);
+
                     pks_list.push(pks.to_string());
                 }
 
-                if (model_derives.is_some()
-                    && model_derives.clone().unwrap().contains("Identifiable"))
-                    && (pks_list.len() > 1 || pks_list[0] != "id".to_string())
-                {
+                if pks_list.len() > 1 || pks_list[0] != "id".to_string() {
+                    str_model = str_model.replace(
+                        "{trace1}",
+                        if model_derives.is_none()
+                            || (model_derives.is_some()
+                                && !model_derives.clone().unwrap().contains("Identifiable"))
+                        {
+                            ", Identifiable"
+                        } else {
+                            ""
+                        },
+                    );
+                    str_model.push_str(&" ".repeat(indent_depth));
                     str_model.push_str("#[primary_key(");
                     str_model.push_str(&pks_list.join(", "));
                     str_model.push_str(")]\n");
@@ -191,9 +203,13 @@ pub fn parse(
             let mut single_type = _type.clone();
             single_type.truncate(b_position);
             let warning_for_longer_lifetime: String;
-            let type_string: &str = match dict
-                .get(single_type.replace("Array<","").replace("Nullable<", "").replace(">", "").trim())
-            {
+            let type_string: &str = match dict.get(
+                single_type
+                    .replace("Array<", "")
+                    .replace("Nullable<", "")
+                    .replace(">", "")
+                    .trim(),
+            ) {
                 Some(name) => name,
                 None => {
                     // Show a warning and return a placeholder.
@@ -227,7 +243,7 @@ pub fn parse(
             str_model.push_str(&format!(
                 "{}pub {}: {},\n",
                 " ".repeat(indent_depth + 4),
-                &vec[8],
+                &vec[8 + indent_depth],
                 if is_optional {
                     format!("Option<{}>", type_with_vec_wrap)
                 } else {
@@ -376,7 +392,7 @@ mod tests {
         assert_eq!(str_request.chars().count(), 109);
         assert_eq!(str_rpc.chars().count(), 151);
         println!("str_model shows as follow:\n{}", str_model);
-        assert_eq!(str_model.chars().count(), 360);
+        assert_eq!(str_model.chars().count(), 440);
         assert_eq!(type_ndt, true);
         assert_eq!(type_bd, true);
         assert_eq!(type_ip, false);
@@ -405,7 +421,8 @@ mod tests {
             false,
             &mut HashMap::default(),
         );
-        assert_eq!(str_model.chars().count(), 369);
+        println!("{}", str_model);
+        assert_eq!(str_model.chars().count(), 534);
         assert_eq!(type_ndt, false);
         assert_eq!(type_bd, false);
         assert_eq!(type_ip, false);
@@ -435,7 +452,7 @@ mod tests {
             &mut HashMap::default(),
         );
 
-        assert_eq!(str_model.chars().count(), 116);
+        assert_eq!(str_model.chars().count(), 157);
         assert_eq!(type_ndt, false);
         assert_eq!(type_bd, false);
         assert_eq!(type_ip, true);
@@ -464,7 +481,7 @@ mod tests {
             false,
             &mut HashMap::default(),
         );
-        assert_eq!(str_model.chars().count(), 86);
+        assert_eq!(str_model.chars().count(), 94);
     }
 
     #[test]
@@ -488,8 +505,8 @@ mod tests {
             false,
             &mut HashMap::default(),
         );
-        // print!("{}",str_model);
-        assert_eq!(str_model.chars().count(), 117);
+        print!("{}", str_model);
+        assert_eq!(str_model.chars().count(), 158);
     }
     #[test]
     fn build_with_identifiable() {
@@ -537,6 +554,6 @@ mod tests {
         );
         print!("{}", str_model);
         assert_eq!(type_uuid, true);
-        assert_eq!(str_model.chars().count(), 143);
+        assert_eq!(str_model.chars().count(), 184);
     }
 }
