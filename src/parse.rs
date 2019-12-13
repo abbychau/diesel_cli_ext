@@ -120,8 +120,12 @@ pub fn parse(
             // this line contains table name
             struct_name = propercase(vec[4 + indent_depth]);
             if is_schema {
-                let _v: Vec<&str> = struct_name.split('.').collect();
-                struct_name = _v[1].to_string();
+                struct_name = if struct_name.contains(".") {
+                    let _v: Vec<&str> = struct_name.split('.').collect();
+                    _v[1].to_string()
+                } else {
+                    struct_name
+                }
             }
             let x: &[_] = &['(', ')', '{', '}', ',', ' '];
             let mut pks_list: Vec<String> = vec![];
@@ -262,11 +266,12 @@ pub fn parse(
                     &request_name
                 ));
             }
-            str_proto.push_str(&format!("    {} {} = {};\n", type_string, &vec[8], count));
+            
+            str_proto.push_str(&format!("    {} {} = {};\n", type_string, &vec[8+indent_depth], count));
             str_from_proto.push_str(&format!(
                 "            {}: i.get_{}(){},\n",
-                &vec[8],
-                &vec[8],
+                &vec[8+indent_depth],
+                &vec[8+indent_depth],
                 match type_string {
                     "string" => ".to_string()",
                     "String" => ".to_string()",
@@ -276,8 +281,8 @@ pub fn parse(
             ));
             str_into_proto.push_str(&format!(
                 "        o.set_{}(i.{}{});\n",
-                &vec[8],
-                &vec[8],
+                &vec[8+indent_depth],
+                &vec[8+indent_depth],
                 match type_string {
                     "string" => ".to_string()",
                     "String" => ".to_string()",
@@ -422,7 +427,7 @@ mod tests {
             &mut HashMap::default(),
         );
         println!("{}", str_model);
-        assert_eq!(str_model.chars().count(), 534);
+        assert_eq!(str_model, file_get_contents("test_data/expected_output/schema_localmodded.rs"));
         assert_eq!(type_ndt, false);
         assert_eq!(type_bd, false);
         assert_eq!(type_ip, false);
