@@ -502,6 +502,32 @@ mod tests {
     }
 
     #[test]
+    fn build_with_time() {
+        let (
+            _str_proto,
+            _str_request,
+            _str_rpc,
+            str_model,
+            _str_from_proto,
+            _str_into_proto,
+            _type_ndt,
+            type_nt,
+            _type_bd,
+            _type_ip,
+            _type_uuid,
+            _type_tz,
+        ) = super::parse(
+            file_get_contents("test_data/schema_with_time.rs"),
+            "model",
+            None,
+            false,
+            &mut HashMap::default(),
+        );
+        assert_eq!(str_model.chars().count(), 97);
+        assert_eq!(type_nt, true);
+    }
+
+    #[test]
     fn build_with_ies() {
         let (
             _str_proto,
