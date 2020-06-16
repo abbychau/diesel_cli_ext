@@ -1,26 +1,29 @@
 use std::collections::HashMap;
-use std::io::{stderr, Write}; 
+use std::io::{stderr, Write};
+
+pub struct ParseOutput {
+    pub str_proto: String,
+    pub str_request: String,
+    pub str_rpc: String,
+    pub str_model: String,
+    pub str_from_proto: String,
+    pub str_into_proto: String,
+    pub type_nd: bool,
+    pub type_ndt: bool,
+    pub type_nt: bool,
+    pub type_bd: bool,
+    pub type_ip: bool,
+    pub type_uuid: bool,
+    pub type_tz: bool,
+}
+
 pub fn parse(
     contents: String,
     action: &str,
     model_derives: Option<String>,
     add_table_name: bool,
     model_type_mapping: &mut HashMap<String, String>,
-) -> (
-    String,
-    String,
-    String,
-    String,
-    String,
-    String,
-    bool,
-    bool,
-    bool,
-    bool,
-    bool,
-    bool,
-    bool,
-) {
+) -> ParseOutput {
     //Parse
     let mut str_model: String = "".to_string();
     let mut str_proto: String = "".to_string();
@@ -283,12 +286,17 @@ pub fn parse(
                     &request_name
                 ));
             }
-            
-            str_proto.push_str(&format!("    {} {} = {};\n", type_string, &vec[8+indent_depth], count));
+
+            str_proto.push_str(&format!(
+                "    {} {} = {};\n",
+                type_string,
+                &vec[8 + indent_depth],
+                count
+            ));
             str_from_proto.push_str(&format!(
                 "            {}: i.get_{}(){},\n",
-                &vec[8+indent_depth],
-                &vec[8+indent_depth],
+                &vec[8 + indent_depth],
+                &vec[8 + indent_depth],
                 match type_string {
                     "string" => ".to_string()",
                     "String" => ".to_string()",
@@ -298,8 +306,8 @@ pub fn parse(
             ));
             str_into_proto.push_str(&format!(
                 "        o.set_{}(i.{}{});\n",
-                &vec[8+indent_depth],
-                &vec[8+indent_depth],
+                &vec[8 + indent_depth],
+                &vec[8 + indent_depth],
                 match type_string {
                     "string" => ".to_string()",
                     "String" => ".to_string()",
@@ -327,7 +335,7 @@ pub fn parse(
         str_model.push_str("\n}\n");
     }
 
-    (
+    ParseOutput {
         str_proto,
         str_request,
         str_rpc,
@@ -341,7 +349,7 @@ pub fn parse(
         type_ip,
         type_uuid,
         type_tz,
-    )
+    }
 }
 
 fn propercase(s: &str) -> String {
@@ -390,95 +398,56 @@ mod tests {
 
     #[test]
     fn build_normal() {
-        let (
-            str_proto,
-            str_request,
-            str_rpc,
-            str_model,
-            str_from_proto,
-            str_into_proto,
-            type_nd,
-            type_ndt,
-            type_nt,
-            type_bd,
-            type_ip,
-            type_uuid,
-            type_tz,
-        ) = super::parse(
+        let parse_output = super::parse(
             file_get_contents("test_data/schema.rs"),
             "model",
             None,
             false,
             &mut HashMap::default(),
         );
-        println!("str_proto shows as follow:\n{}", str_proto);
-        assert_eq!(str_proto.chars().count(), 266);
-        assert_eq!(str_into_proto.chars().count(), 708);
-        assert_eq!(str_from_proto.chars().count(), 680);
-        assert_eq!(str_request.chars().count(), 109);
-        assert_eq!(str_rpc.chars().count(), 151);
-        println!("str_model shows as follow:\n{}", str_model);
-        assert_eq!(str_model.chars().count(), 440);
-        assert_eq!(type_nd, false);
-        assert_eq!(type_ndt, true);
-        assert_eq!(type_nt, false);
-        assert_eq!(type_bd, true);
-        assert_eq!(type_ip, false);
-        assert_eq!(type_uuid, false);
-        assert_eq!(type_tz, true);
+        println!("str_proto shows as follow:\n{}", parse_output.str_proto);
+        assert_eq!(parse_output.str_proto.chars().count(), 266);
+        assert_eq!(parse_output.str_into_proto.chars().count(), 708);
+        assert_eq!(parse_output.str_from_proto.chars().count(), 680);
+        assert_eq!(parse_output.str_request.chars().count(), 109);
+        assert_eq!(parse_output.str_rpc.chars().count(), 151);
+        println!("str_model shows as follow:\n{}", parse_output.str_model);
+        assert_eq!(parse_output.str_model.chars().count(), 440);
+        assert_eq!(parse_output.type_nd, false);
+        assert_eq!(parse_output.type_ndt, true);
+        assert_eq!(parse_output.type_nt, false);
+        assert_eq!(parse_output.type_bd, true);
+        assert_eq!(parse_output.type_ip, false);
+        assert_eq!(parse_output.type_uuid, false);
+        assert_eq!(parse_output.type_tz, true);
     }
 
     #[test]
     fn build_with_localmodded() {
-        let (
-            _str_proto,
-            _str_request,
-            _str_rpc,
-            str_model,
-            _str_from_proto,
-            _str_into_proto,
-            type_nd,
-            type_ndt,
-            type_nt,
-            type_bd,
-            type_ip,
-            type_uuid,
-            type_tz,
-        ) = super::parse(
+        let parse_output = super::parse(
             file_get_contents("test_data/schema_localmodded.rs"),
             "model",
             None,
             false,
             &mut HashMap::default(),
         );
-        println!("{}", str_model);
-        assert_eq!(str_model, file_get_contents("test_data/expected_output/schema_localmodded.rs"));
-        assert_eq!(type_nd, false);
-        assert_eq!(type_ndt, false);
-        assert_eq!(type_nt, false);
-        assert_eq!(type_bd, false);
-        assert_eq!(type_ip, false);
-        assert_eq!(type_uuid, false);
-        assert_eq!(type_tz, false);
+        println!("{}", parse_output.str_model);
+        assert_eq!(
+            parse_output.str_model,
+            file_get_contents("test_data/expected_output/schema_localmodded.rs")
+        );
+        assert_eq!(parse_output.type_nd, false);
+        assert_eq!(parse_output.type_ndt, false);
+        assert_eq!(parse_output.type_nt, false);
+        assert_eq!(parse_output.type_bd, false);
+        assert_eq!(parse_output.type_ip, false);
+        assert_eq!(parse_output.type_uuid, false);
+        assert_eq!(parse_output.type_tz, false);
     }
 
     #[test]
     fn build_with_ip_bytea() {
-        let (
-            _str_proto,
-            _str_request,
-            _str_rpc,
-            str_model,
-            _str_from_proto,
-            _str_into_proto,
-            type_nd,
-            type_ndt,
-            type_nt,
-            type_bd,
-            type_ip,
-            type_uuid,
-            type_tz,
-        ) = super::parse(
+        let parse_output = super::parse(
             file_get_contents("test_data/schema_with_ip_bytea.rs"),
             "model",
             None,
@@ -486,145 +455,75 @@ mod tests {
             &mut HashMap::default(),
         );
 
-        assert_eq!(str_model.chars().count(), 157);
-        assert_eq!(type_nd, false);
-        assert_eq!(type_ndt, false);
-        assert_eq!(type_nt, false);
-        assert_eq!(type_bd, false);
-        assert_eq!(type_ip, true);
-        assert_eq!(type_uuid, false);
-        assert_eq!(type_tz, false);
+        assert_eq!(parse_output.str_model.chars().count(), 157);
+        assert_eq!(parse_output.type_nd, false);
+        assert_eq!(parse_output.type_ndt, false);
+        assert_eq!(parse_output.type_nt, false);
+        assert_eq!(parse_output.type_bd, false);
+        assert_eq!(parse_output.type_ip, true);
+        assert_eq!(parse_output.type_uuid, false);
+        assert_eq!(parse_output.type_tz, false);
     }
 
     #[test]
     fn build_with_tab() {
-        let (
-            _str_proto,
-            _str_request,
-            _str_rpc,
-            str_model,
-            _str_from_proto,
-            _str_into_proto,
-            _type_nd,
-            _type_ndt,
-            _type_nt,
-            _type_bd,
-            _type_ip,
-            _type_uuid,
-            _type_tz,
-        ) = super::parse(
+        let parse_output = super::parse(
             file_get_contents("test_data/schema_with_tab.rs"),
             "model",
             None,
             false,
             &mut HashMap::default(),
         );
-        assert_eq!(str_model.chars().count(), 94);
+        assert_eq!(parse_output.str_model.chars().count(), 94);
     }
 
     #[test]
     fn build_with_time() {
-        let (
-            _str_proto,
-            _str_request,
-            _str_rpc,
-            str_model,
-            _str_from_proto,
-            _str_into_proto,
-            _type_nd,
-            _type_ndt,
-            type_nt,
-            _type_bd,
-            _type_ip,
-            _type_uuid,
-            _type_tz,
-        ) = super::parse(
+        let parse_output = super::parse(
             file_get_contents("test_data/schema_with_time.rs"),
             "model",
             None,
             false,
             &mut HashMap::default(),
         );
-        assert_eq!(str_model.chars().count(), 97);
-        assert_eq!(type_nt, true);
+        assert_eq!(parse_output.str_model.chars().count(), 97);
+        assert_eq!(parse_output.type_nt, true);
     }
 
     #[test]
     fn build_with_ies() {
-        let (
-            _str_proto,
-            _str_request,
-            _str_rpc,
-            str_model,
-            _str_from_proto,
-            _str_into_proto,
-            _type_nd,
-            _type_ndt,
-            _type_nt,
-            _type_bd,
-            _type_ip,
-            _type_uuid,
-            _type_tz,
-        ) = super::parse(
+        let parse_output = super::parse(
             file_get_contents("test_data/schema_with_ies.rs"),
             "model",
             None,
             false,
             &mut HashMap::default(),
         );
-        print!("{}", str_model);
-        assert_eq!(str_model.chars().count(), 158);
+        print!("{}", parse_output.str_model);
+        assert_eq!(parse_output.str_model.chars().count(), 158);
     }
     #[test]
     fn build_with_identifiable() {
-        let (
-            _str_proto,
-            _str_request,
-            _str_rpc,
-            str_model,
-            _str_from_proto,
-            _str_into_proto,
-            _type_nd,
-            _type_ndt,
-            _type_nt,
-            _type_bd,
-            _type_ip,
-            _type_uuid,
-            _type_tz,
-        ) = super::parse(
+        let parse_output = super::parse(
             file_get_contents("test_data/schema.rs"),
             "model",
             Some("Identifiable".to_string()),
             false,
             &mut HashMap::default(),
         );
-        print!("{}", str_model);
+        print!("{}", parse_output.str_model);
     }
     #[test]
     fn build_with_uuid() {
-        let (
-            _str_proto,
-            _str_request,
-            _str_rpc,
-            str_model,
-            _str_from_proto,
-            _str_into_proto,
-            _type_nd,
-            _type_ndt,
-            _type_nt,
-            _type_bd,
-            _type_ip,
-            type_uuid,
-            _type_tz,
-        ) = super::parse(
+        let parse_output = super::parse(
             file_get_contents("test_data/schema_uuid.rs"),
             "model",
             None,
             false,
             &mut HashMap::default(),
         );
-        print!("{}", str_model);
-        assert_eq!(type_uuid, true);
-        assert_eq!(str_model.chars().count(), 184);
+        print!("{}", parse_output.str_model);
+        assert_eq!(parse_output.type_uuid, true);
+        assert_eq!(parse_output.str_model.chars().count(), 184);
     }
 }
