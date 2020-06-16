@@ -49,6 +49,7 @@ pub fn parse(
         ("Timestamp", "NaiveDateTime"),
         ("Timestamptz", "DateTime<Utc>"),
         ("Float4", "f32"),
+        ("Float8", "f64"),
         ("Float", "f32"), //sqlite
         ("Bool", "bool"),
         ("Json", "Json"),
@@ -73,6 +74,7 @@ pub fn parse(
         ("Timestamp", "string"),
         ("Timestamptz", "string"),
         ("Float4", "float"),
+        ("Float8", "double"),
         ("Bool", "bool"),
         ("Json", "string"),
         ("Jsonb", "string"),
