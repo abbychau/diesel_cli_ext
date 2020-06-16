@@ -23,6 +23,7 @@ pub fn custom_opts_usage(iopts: Options, brief: &str) -> String {
 }
 
 fn print_normal_dependencies(
+    type_nd: bool,
     type_ndt: bool,
     type_nt: bool,
     type_bd: bool,
@@ -30,6 +31,9 @@ fn print_normal_dependencies(
     type_uuid: bool,
     type_tz: bool,
 ) {
+    if type_nd {
+        println!("use chrono::NaiveDate;");
+    }
     if type_ndt {
         println!("use chrono::NaiveDateTime;");
     }
@@ -202,6 +206,7 @@ fn main() {
         str_model,
         str_from_proto,
         str_into_proto,
+        type_nd,
         type_ndt,
         type_nt,
         type_bd,
@@ -239,7 +244,9 @@ fn main() {
             println!("#![allow(clippy::all)]\n");
 
             println!("{}", import_type_string);
-            print_normal_dependencies(type_ndt, type_nt, type_bd, type_ip, type_uuid, type_tz);
+            print_normal_dependencies(
+                type_nd, type_ndt, type_nt, type_bd, type_ip, type_uuid, type_tz,
+            );
             println!("{}", str_model);
         }
         "from_proto" => {

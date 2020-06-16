@@ -19,6 +19,7 @@ pub fn parse(
     bool,
     bool,
     bool,
+    bool,
 ) {
     //Parse
     let mut str_model: String = "".to_string();
@@ -28,8 +29,15 @@ pub fn parse(
     let mut str_rpc: String = "".to_string();
     let mut str_request: String = "".to_string();
     let mut closable: bool = false;
-    let (mut type_ndt, mut type_nt, mut type_bd, mut type_ip, mut type_uuid, mut type_tz) =
-        (false, false, false, false, false, false);
+    let (
+        mut type_nd,
+        mut type_ndt,
+        mut type_nt,
+        mut type_bd,
+        mut type_ip,
+        mut type_uuid,
+        mut type_tz,
+    ) = (false, false, false, false, false, false, false);
 
     let mut count: u16 = 0;
     let mut struct_name: String = "".to_string();
@@ -226,6 +234,9 @@ pub fn parse(
                     &warning_for_longer_lifetime[..]
                 }
             };
+            if type_string == "NaiveDate" {
+                type_nd = true;
+            }
             if type_string == "NaiveDateTime" {
                 type_ndt = true;
             }
@@ -323,6 +334,7 @@ pub fn parse(
         str_model,
         str_from_proto,
         str_into_proto,
+        type_nd,
         type_ndt,
         type_nt,
         type_bd,
@@ -385,6 +397,7 @@ mod tests {
             str_model,
             str_from_proto,
             str_into_proto,
+            type_nd,
             type_ndt,
             type_nt,
             type_bd,
@@ -406,6 +419,7 @@ mod tests {
         assert_eq!(str_rpc.chars().count(), 151);
         println!("str_model shows as follow:\n{}", str_model);
         assert_eq!(str_model.chars().count(), 440);
+        assert_eq!(type_nd, false);
         assert_eq!(type_ndt, true);
         assert_eq!(type_nt, false);
         assert_eq!(type_bd, true);
@@ -423,6 +437,7 @@ mod tests {
             str_model,
             _str_from_proto,
             _str_into_proto,
+            type_nd,
             type_ndt,
             type_nt,
             type_bd,
@@ -438,6 +453,7 @@ mod tests {
         );
         println!("{}", str_model);
         assert_eq!(str_model, file_get_contents("test_data/expected_output/schema_localmodded.rs"));
+        assert_eq!(type_nd, false);
         assert_eq!(type_ndt, false);
         assert_eq!(type_nt, false);
         assert_eq!(type_bd, false);
@@ -455,6 +471,7 @@ mod tests {
             str_model,
             _str_from_proto,
             _str_into_proto,
+            type_nd,
             type_ndt,
             type_nt,
             type_bd,
@@ -470,6 +487,7 @@ mod tests {
         );
 
         assert_eq!(str_model.chars().count(), 157);
+        assert_eq!(type_nd, false);
         assert_eq!(type_ndt, false);
         assert_eq!(type_nt, false);
         assert_eq!(type_bd, false);
@@ -487,6 +505,7 @@ mod tests {
             str_model,
             _str_from_proto,
             _str_into_proto,
+            _type_nd,
             _type_ndt,
             _type_nt,
             _type_bd,
@@ -512,6 +531,7 @@ mod tests {
             str_model,
             _str_from_proto,
             _str_into_proto,
+            _type_nd,
             _type_ndt,
             type_nt,
             _type_bd,
@@ -538,6 +558,7 @@ mod tests {
             str_model,
             _str_from_proto,
             _str_into_proto,
+            _type_nd,
             _type_ndt,
             _type_nt,
             _type_bd,
@@ -563,6 +584,7 @@ mod tests {
             str_model,
             _str_from_proto,
             _str_into_proto,
+            _type_nd,
             _type_ndt,
             _type_nt,
             _type_bd,
@@ -587,6 +609,7 @@ mod tests {
             str_model,
             _str_from_proto,
             _str_into_proto,
+            _type_nd,
             _type_ndt,
             _type_nt,
             _type_bd,
