@@ -24,6 +24,7 @@ pub fn custom_opts_usage(iopts: Options, brief: &str) -> String {
 
 fn print_normal_dependencies(
     type_ndt: bool,
+    type_nt: bool,
     type_bd: bool,
     type_ip: bool,
     type_uuid: bool,
@@ -31,6 +32,9 @@ fn print_normal_dependencies(
 ) {
     if type_ndt {
         println!("use chrono::NaiveDateTime;");
+    }
+    if type_nt {
+        println!("use chrono::NaiveTime;");
     }
     if type_bd {
         println!("use bigdecimal::BigDecimal;");
@@ -113,6 +117,7 @@ fn main() {
         "Add #[table_name = x] before structs",
     );
 
+    opts.optflag("p", "proto", "Set as proto output");
     opts.optflag("i", "into_proto", "Set as into_proto output");
     opts.optflag("f", "from_proto", "Set as from_proto output");
     opts.optopt("c", "class_name", "Set proto class name", "CLASS_NAME");
@@ -150,6 +155,8 @@ fn main() {
         class_name = matches
             .opt_str("c")
             .unwrap_or_else(|| "class_name".to_string());
+    } else if matches.opt_present("p") {
+        action = "proto";
     } else {
         //default as m
         action = "model";
@@ -196,6 +203,7 @@ fn main() {
         str_from_proto,
         str_into_proto,
         type_ndt,
+        type_nt,
         type_bd,
         type_ip,
         type_uuid,
@@ -231,7 +239,7 @@ fn main() {
             println!("#![allow(clippy::all)]\n");
 
             println!("{}", import_type_string);
-            print_normal_dependencies(type_ndt, type_bd, type_ip, type_uuid, type_tz);
+            print_normal_dependencies(type_ndt, type_nt, type_bd, type_ip, type_uuid, type_tz);
             println!("{}", str_model);
         }
         "from_proto" => {

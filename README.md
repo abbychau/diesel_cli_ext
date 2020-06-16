@@ -42,6 +42,7 @@ Model Options:
                         Add #[table_name = x] before structs
 
 Proto Options:
+    -p, --proto         Set as proto output
     -i, --into_proto    Set as into_proto output
     -f, --from_proto    Set as from_proto output
     -c, --class_name CLASS_NAME
@@ -54,7 +55,7 @@ Output demostrations as below...
 
 
 ### To generate model structs:
-e.g. `diesel_ext > src/db/db_models.rs` , `diesel_ext model > src/models.rs` (it is the default option)
+e.g. `diesel_ext > src/db/db_models.rs` , `diesel_ext -m > src/models.rs`, `diesel_ext --model > src/models.rs` (it is the default option)
 
 Sample model output:
 ``` rust
@@ -77,7 +78,7 @@ pub struct Order {
 ```
 
 ### To generate prelimitive proto file:
-`diesel_ext proto > myproto.proto`
+`diesel_ext -p > myproto.proto`, `diesel_ext --proto > myproto.proto`
 
 Sample output:
 ``` r
@@ -111,7 +112,7 @@ service MessageRpc {
 ```
 
 ### To generate proto conversions:
-`diesel_ext -f class_name > proto/src/conversion/from_proto.rs`, `diesel_ext -i class_name > proto/src/conversion/into_proto.rs`
+`diesel_ext -f -c class_name > proto/src/conversion/from_proto.rs`, `diesel_ext -i -c class_name > proto/src/conversion/into_proto.rs`
 
 (if you omit the second parameter, names will be displayed as `_name_` for your search and replace.)
 

@@ -1,6 +1,5 @@
 use std::collections::HashMap;
-use std::io::{stderr, Write};
-
+use std::io::{stderr, Write}; 
 pub fn parse(
     contents: String,
     action: &str,
@@ -19,18 +18,18 @@ pub fn parse(
     bool,
     bool,
     bool,
+    bool,
 ) {
     //Parse
     let mut str_model: String = "".to_string();
     let mut str_proto: String = "".to_string();
     let mut str_from_proto: String = "".to_string();
     let mut str_into_proto: String = "".to_string();
-
     let mut str_rpc: String = "".to_string();
     let mut str_request: String = "".to_string();
     let mut closable: bool = false;
-    let (mut type_ndt, mut type_bd, mut type_ip, mut type_uuid, mut type_tz) =
-        (false, false, false, false, false);
+    let (mut type_ndt, mut type_nt, mut type_bd, mut type_ip, mut type_uuid, mut type_tz) =
+        (false, false, false, false, false, false);
 
     let mut count: u16 = 0;
     let mut struct_name: String = "".to_string();
@@ -46,6 +45,7 @@ pub fn parse(
         ("Numeric", "BigDecimal"),
         ("Text", "String"),
         ("Date", "NaiveDate"),
+        ("Time", "NaiveTime"),
         ("Timestamp", "NaiveDateTime"),
         ("Timestamptz", "DateTime<Utc>"),
         ("Float4", "f32"),
@@ -109,30 +109,47 @@ pub fn parse(
             str_model.push_str(&format!(
                 "\n{}#[derive({})]\n",
                 " ".repeat(indent_depth),
-                match model_derives.as_ref().map(String::as_str) {
-                    Some(x) => x,
-                    None => "Queryable, Debug",
-                }
+                &format!(
+                    "{}{{trace1}}",
+                    match model_derives.as_ref().map(String::as_str) {
+                        Some(x) => x,
+                        None => "Queryable, Debug",
+                    }
+                )
             ));
         } else if cmp.contains(") {") {
             // this line contains table name
             struct_name = propercase(vec[4 + indent_depth]);
             if is_schema {
-                let _v: Vec<&str> = struct_name.split('.').collect();
-                struct_name = _v[1].to_string();
+                struct_name = if struct_name.contains(".") {
+                    let _v: Vec<&str> = struct_name.split('.').collect();
+                    _v[1].to_string()
+                } else {
+                    struct_name
+                }
             }
             let x: &[_] = &['(', ')', '{', '}', ',', ' '];
             let mut pks_list: Vec<String> = vec![];
-            if vec.len() - 1 > 5 {
-                for i in 5..vec.len() - 1 {
+            if vec.len() - 1 > 5 + indent_depth {
+                for i in 5 + indent_depth..vec.len() - 1 {
                     let pks = vec[i].trim_matches(x);
+
                     pks_list.push(pks.to_string());
                 }
 
-                if (model_derives.is_some()
-                    && model_derives.clone().unwrap().contains("Identifiable"))
-                    && (pks_list.len() > 1 || pks_list[0] != "id".to_string())
-                {
+                if pks_list.len() > 1 || pks_list[0] != "id".to_string() {
+                    str_model = str_model.replace(
+                        "{trace1}",
+                        if model_derives.is_none()
+                            || (model_derives.is_some()
+                                && !model_derives.clone().unwrap().contains("Identifiable"))
+                        {
+                            ", Identifiable"
+                        } else {
+                            ""
+                        },
+                    );
+                    str_model.push_str(&" ".repeat(indent_depth));
                     str_model.push_str("#[primary_key(");
                     str_model.push_str(&pks_list.join(", "));
                     str_model.push_str(")]\n");
@@ -191,9 +208,13 @@ pub fn parse(
             let mut single_type = _type.clone();
             single_type.truncate(b_position);
             let warning_for_longer_lifetime: String;
-            let type_string: &str = match dict
-                .get(single_type.replace("Array<","").replace("Nullable<", "").replace(">", "").trim())
-            {
+            let type_string: &str = match dict.get(
+                single_type
+                    .replace("Array<", "")
+                    .replace("Nullable<", "")
+                    .replace(">", "")
+                    .trim(),
+            ) {
                 Some(name) => name,
                 None => {
                     // Show a warning and return a placeholder.
@@ -205,6 +226,9 @@ pub fn parse(
             };
             if type_string == "NaiveDateTime" {
                 type_ndt = true;
+            }
+            if type_string == "NaiveTime" {
+                type_nt = true;
             }
             if type_string == "BigDecimal" {
                 type_bd = true;
@@ -227,7 +251,7 @@ pub fn parse(
             str_model.push_str(&format!(
                 "{}pub {}: {},\n",
                 " ".repeat(indent_depth + 4),
-                &vec[8],
+                &vec[8 + indent_depth],
                 if is_optional {
                     format!("Option<{}>", type_with_vec_wrap)
                 } else {
@@ -246,11 +270,12 @@ pub fn parse(
                     &request_name
                 ));
             }
-            str_proto.push_str(&format!("    {} {} = {};\n", type_string, &vec[8], count));
+            
+            str_proto.push_str(&format!("    {} {} = {};\n", type_string, &vec[8+indent_depth], count));
             str_from_proto.push_str(&format!(
                 "            {}: i.get_{}(){},\n",
-                &vec[8],
-                &vec[8],
+                &vec[8+indent_depth],
+                &vec[8+indent_depth],
                 match type_string {
                     "string" => ".to_string()",
                     "String" => ".to_string()",
@@ -260,8 +285,8 @@ pub fn parse(
             ));
             str_into_proto.push_str(&format!(
                 "        o.set_{}(i.{}{});\n",
-                &vec[8],
-                &vec[8],
+                &vec[8+indent_depth],
+                &vec[8+indent_depth],
                 match type_string {
                     "string" => ".to_string()",
                     "String" => ".to_string()",
@@ -297,6 +322,7 @@ pub fn parse(
         str_from_proto,
         str_into_proto,
         type_ndt,
+        type_nt,
         type_bd,
         type_ip,
         type_uuid,
@@ -358,6 +384,7 @@ mod tests {
             str_from_proto,
             str_into_proto,
             type_ndt,
+            type_nt,
             type_bd,
             type_ip,
             type_uuid,
@@ -376,8 +403,9 @@ mod tests {
         assert_eq!(str_request.chars().count(), 109);
         assert_eq!(str_rpc.chars().count(), 151);
         println!("str_model shows as follow:\n{}", str_model);
-        assert_eq!(str_model.chars().count(), 360);
+        assert_eq!(str_model.chars().count(), 440);
         assert_eq!(type_ndt, true);
+        assert_eq!(type_nt, false);
         assert_eq!(type_bd, true);
         assert_eq!(type_ip, false);
         assert_eq!(type_uuid, false);
@@ -394,6 +422,7 @@ mod tests {
             _str_from_proto,
             _str_into_proto,
             type_ndt,
+            type_nt,
             type_bd,
             type_ip,
             type_uuid,
@@ -405,8 +434,10 @@ mod tests {
             false,
             &mut HashMap::default(),
         );
-        assert_eq!(str_model.chars().count(), 369);
+        println!("{}", str_model);
+        assert_eq!(str_model, file_get_contents("test_data/expected_output/schema_localmodded.rs"));
         assert_eq!(type_ndt, false);
+        assert_eq!(type_nt, false);
         assert_eq!(type_bd, false);
         assert_eq!(type_ip, false);
         assert_eq!(type_uuid, false);
@@ -423,6 +454,7 @@ mod tests {
             _str_from_proto,
             _str_into_proto,
             type_ndt,
+            type_nt,
             type_bd,
             type_ip,
             type_uuid,
@@ -435,8 +467,9 @@ mod tests {
             &mut HashMap::default(),
         );
 
-        assert_eq!(str_model.chars().count(), 116);
+        assert_eq!(str_model.chars().count(), 157);
         assert_eq!(type_ndt, false);
+        assert_eq!(type_nt, false);
         assert_eq!(type_bd, false);
         assert_eq!(type_ip, true);
         assert_eq!(type_uuid, false);
@@ -453,6 +486,7 @@ mod tests {
             _str_from_proto,
             _str_into_proto,
             _type_ndt,
+            _type_nt,
             _type_bd,
             _type_ip,
             _type_uuid,
@@ -464,7 +498,33 @@ mod tests {
             false,
             &mut HashMap::default(),
         );
-        assert_eq!(str_model.chars().count(), 86);
+        assert_eq!(str_model.chars().count(), 94);
+    }
+
+    #[test]
+    fn build_with_time() {
+        let (
+            _str_proto,
+            _str_request,
+            _str_rpc,
+            str_model,
+            _str_from_proto,
+            _str_into_proto,
+            _type_ndt,
+            type_nt,
+            _type_bd,
+            _type_ip,
+            _type_uuid,
+            _type_tz,
+        ) = super::parse(
+            file_get_contents("test_data/schema_with_time.rs"),
+            "model",
+            None,
+            false,
+            &mut HashMap::default(),
+        );
+        assert_eq!(str_model.chars().count(), 97);
+        assert_eq!(type_nt, true);
     }
 
     #[test]
@@ -477,6 +537,7 @@ mod tests {
             _str_from_proto,
             _str_into_proto,
             _type_ndt,
+            _type_nt,
             _type_bd,
             _type_ip,
             _type_uuid,
@@ -488,8 +549,8 @@ mod tests {
             false,
             &mut HashMap::default(),
         );
-        // print!("{}",str_model);
-        assert_eq!(str_model.chars().count(), 117);
+        print!("{}", str_model);
+        assert_eq!(str_model.chars().count(), 158);
     }
     #[test]
     fn build_with_identifiable() {
@@ -501,6 +562,7 @@ mod tests {
             _str_from_proto,
             _str_into_proto,
             _type_ndt,
+            _type_nt,
             _type_bd,
             _type_ip,
             _type_uuid,
@@ -524,6 +586,7 @@ mod tests {
             _str_from_proto,
             _str_into_proto,
             _type_ndt,
+            _type_nt,
             _type_bd,
             _type_ip,
             type_uuid,
@@ -537,6 +600,6 @@ mod tests {
         );
         print!("{}", str_model);
         assert_eq!(type_uuid, true);
-        assert_eq!(str_model.chars().count(), 143);
+        assert_eq!(str_model.chars().count(), 184);
     }
 }
