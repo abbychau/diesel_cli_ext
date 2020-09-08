@@ -43,9 +43,11 @@ pub fn parse(
         ("Int8", "i64"),
         ("BigInt", "i64"),
         ("Numeric", "BigDecimal"),
+        ("Decimal", "f64"),
         ("Text", "String"),
         ("Date", "NaiveDate"),
         ("Time", "NaiveTime"),
+        ("Datetime", "NaiveDateTime"),
         ("Timestamp", "NaiveDateTime"),
         ("Timestamptz", "DateTime<Utc>"),
         ("Float4", "f32"),
@@ -56,6 +58,7 @@ pub fn parse(
         ("Uuid", "Uuid"),
         ("Varchar", "String"),
         ("Bytea", "Vec<u8>"),
+        ("Bit", "bool"),
         ("Inet", "IpNetwork"),
     ]
     .iter()
@@ -212,6 +215,7 @@ pub fn parse(
                 single_type
                     .replace("Array<", "")
                     .replace("Nullable<", "")
+                    .replace("Unsigned<", "")
                     .replace(">", "")
                     .trim(),
             ) {
@@ -601,5 +605,32 @@ mod tests {
         print!("{}", str_model);
         assert_eq!(type_uuid, true);
         assert_eq!(str_model.chars().count(), 184);
+    }
+
+    #[test]
+    fn build_with_mysql() {
+        let (
+            _str_proto,
+            _str_request,
+            _str_rpc,
+            str_model,
+            _str_from_proto,
+            _str_into_proto,
+            _type_ndt,
+            _type_nt,
+            _type_bd,
+            _type_ip,
+            type_uuid,
+            _type_tz,
+        ) = super::parse(
+            file_get_contents("test_data/schema_mysql.rs"),
+            "model",
+            None,
+            false,
+            &mut HashMap::default(),
+        );
+        print!("{}", str_model);
+        print!("{}", type_uuid);
+        assert_eq!(str_model.chars().count(), 777);
     }
 }
