@@ -51,6 +51,8 @@ pub fn parse(
         ("SmallInt", "i16"), //sqlite
         ("Int4", "i32"),
         ("Integer", "i32"), //sqlite
+        ("Unsigned<Integer","u32"),
+        ("Unsigned<Decimal","f64"),
         ("Int8", "i64"),
         ("BigInt", "i64"),
         ("Numeric", "BigDecimal"),
@@ -228,7 +230,6 @@ pub fn parse(
                 single_type
                     .replace("Array<", "")
                     .replace("Nullable<", "")
-                    .replace("Unsigned<", "")
                     .replace(">", "")
                     .trim(),
             ) {
@@ -338,7 +339,8 @@ pub fn parse(
     if is_schema {
         str_model.push_str("\n}\n");
     }
-
+    str_model = str_model.trim().replace("{trace1}","");
+    str_model.push_str("\n");
     ParseOutput {
         str_proto,
         str_request,
@@ -397,7 +399,8 @@ mod tests {
         let mut contents = String::new();
         f.read_to_string(&mut contents)
             .expect("Something went wrong reading the file.");
-        contents
+
+        contents.replace("\r", "")
     }
 
     #[test]
@@ -416,7 +419,7 @@ mod tests {
         assert_eq!(parse_output.str_request.chars().count(), 109);
         assert_eq!(parse_output.str_rpc.chars().count(), 151);
         println!("str_model shows as follow:\n{}", parse_output.str_model);
-        assert_eq!(parse_output.str_model.chars().count(), 440);
+        assert_eq!(parse_output.str_model, file_get_contents("test_data/expected_output/schema.rs"));
         assert_eq!(parse_output.type_nd, false);
         assert_eq!(parse_output.type_ndt, true);
         assert_eq!(parse_output.type_nt, false);
@@ -458,8 +461,8 @@ mod tests {
             false,
             &mut HashMap::default(),
         );
-
-        assert_eq!(parse_output.str_model.chars().count(), 157);
+        print!("{}", parse_output.str_model);
+        assert_eq!(parse_output.str_model,file_get_contents("test_data/expected_output/schema_with_ip_bytea.rs"));
         assert_eq!(parse_output.type_nd, false);
         assert_eq!(parse_output.type_ndt, false);
         assert_eq!(parse_output.type_nt, false);
@@ -478,7 +481,9 @@ mod tests {
             false,
             &mut HashMap::default(),
         );
-        assert_eq!(parse_output.str_model.chars().count(), 94);
+        print!("{}",parse_output.str_model);
+
+        assert_eq!(parse_output.str_model.chars().count(), 85);
     }
 
     #[test]
@@ -490,7 +495,8 @@ mod tests {
             false,
             &mut HashMap::default(),
         );
-        assert_eq!(parse_output.str_model.chars().count(), 97);
+        print!("{}",parse_output.str_model);
+        assert_eq!(parse_output.str_model.chars().count(), 88);
         assert_eq!(parse_output.type_nt, true);
     }
 
@@ -504,8 +510,9 @@ mod tests {
             &mut HashMap::default(),
         );
         print!("{}", parse_output.str_model);
-        assert_eq!(parse_output.str_model.chars().count(), 158);
+        assert_eq!(parse_output.str_model,file_get_contents("test_data/expected_output/schema_with_ies.rs"));
     }
+
     #[test]
     fn build_with_identifiable() {
         let parse_output = super::parse(
@@ -517,6 +524,7 @@ mod tests {
         );
         print!("{}", parse_output.str_model);
     }
+
     #[test]
     fn build_with_uuid() {
         let parse_output = super::parse(
@@ -526,35 +534,22 @@ mod tests {
             false,
             &mut HashMap::default(),
         );
-        print!("{}", parse_output.str_model);
+        // print!("{}", parse_output.str_model);
         assert_eq!(parse_output.type_uuid, true);
-        assert_eq!(parse_output.str_model.chars().count(), 184);
+        assert_eq!(parse_output.str_model.chars().count(), 183);
     }
 
     #[test]
     fn build_with_mysql() {
-        let (
-            _str_proto,
-            _str_request,
-            _str_rpc,
-            str_model,
-            _str_from_proto,
-            _str_into_proto,
-            _type_ndt,
-            _type_nt,
-            _type_bd,
-            _type_ip,
-            type_uuid,
-            _type_tz,
-        ) = super::parse(
+        let parse_output = super::parse(
             file_get_contents("test_data/schema_mysql.rs"),
             "model",
             None,
             false,
             &mut HashMap::default(),
         );
-        print!("{}", str_model);
-        print!("{}", type_uuid);
-        assert_eq!(str_model.chars().count(), 777);
+        print!("a:{}", parse_output.str_model);
+        assert_eq!(parse_output.str_model, 
+        file_get_contents("test_data/expected_output/schema_mysql.rs"));
     }
 }
