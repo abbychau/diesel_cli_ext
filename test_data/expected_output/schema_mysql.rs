@@ -28,3 +28,38 @@ pub struct Something {
     pub createdAt: Option<NaiveDateTime>,
     pub updatedAt: Option<NaiveDateTime>,
 }
+
+#[derive(Queryable, Debug)]
+pub struct TextType {
+    pub id: i32,
+    pub tinytext: String,
+    pub nullableTinytext: Option<String>,
+    pub mediumtext: String,
+    pub nullableMediumtext: Option<String>,
+    pub longtext: String,
+    pub nullableLongtext: Option<String>,
+}
+
+#[derive(Queryable, Debug)]
+pub struct NumericType {
+    pub id: i32,
+    pub double: f64,
+    pub nullableDouble: Option<f64>,
+    pub tinyint: i8,
+    pub nullableTinyint: Option<i8>,
+    pub smallint: i16,
+    pub nullableSmallint: Option<i16>,
+    pub bigint: i64,
+    pub nullableBigint: Option<i64>,
+}
+
+#[derive(Queryable, Debug)]
+pub struct UnsignedType {
+    pub id: i32,
+    pub unsignedTinyint: u8,
+    pub nullableUnsignedTinyint: Option<u8>,
+    pub unsignedSmallint: u16,
+    pub nullableUnsignedSmallint: Option<u16>,
+    pub bigint: u64,
+    pub nullableBigint: Option<u64>,
+}

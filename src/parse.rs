@@ -74,6 +74,16 @@ pub fn parse(
         ("Bytea", "Vec<u8>"),
         ("Bit", "bool"),
         ("Inet", "IpNetwork"),
+        ("Tinytext", "String"),
+        ("Mediumtext", "String"),
+        ("Longtext", "String"),
+        ("Double", "f64"),
+        ("Tinyint", "i8"),
+        ("Unsigned<Tinyint", "u8"),
+        ("Smallint", "i16"),
+        ("Unsigned<Smallint", "u16"),
+        ("Bigint", "i64"),
+        ("Unsigned<Bigint", "u64"),
     ]
     .iter()
     .cloned()
