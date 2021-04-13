@@ -63,3 +63,25 @@ pub struct UnsignedType {
     pub bigint: u64,
     pub nullableBigint: Option<u64>,
 }
+
+#[derive(Queryable, Debug)]
+pub struct BlobType {
+    pub id: i32,
+    pub blob: Vec<u8>,
+    pub nullableBlob: Option<Vec<u8>>,
+    pub tinyblob: Vec<u8>,
+    pub nullableTinyblob: Option<Vec<u8>>,
+    pub mediumblob: Vec<u8>,
+    pub nullableMediumblob: Option<Vec<u8>>,
+    pub longblob: Vec<u8>,
+    pub nullableLongblob: Option<Vec<u8>>,
+}
+
+#[derive(Queryable, Debug)]
+pub struct BinaryAndChar {
+    pub id: i32,
+    pub char: String,
+    pub varchar: String,
+    pub binary: Vec<u8>,
+    pub varbinary: Vec<u8>,
+}

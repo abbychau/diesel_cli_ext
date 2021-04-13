@@ -98,3 +98,27 @@ table! {
         nullableBigint -> Nullable<Unsigned<Bigint>>,
     }
 }
+
+table! {
+    blob_types (id) {
+        id -> Integer,
+        blob -> Blob,
+        nullableBlob -> Nullable<Blob>,
+        tinyblob -> Tinyblob,
+        nullableTinyblob -> Nullable<Tinyblob>,
+        mediumblob -> Mediumblob,
+        nullableMediumblob -> Nullable<Mediumblob>,
+        longblob -> Mediumblob,
+        nullableLongblob -> Nullable<Mediumblob>,
+    }
+}
+
+table! {
+    binary_and_chars (id) {
+        id -> Integer,
+        char -> Char,
+        varchar -> Varchar,
+        binary -> Binary,
+        varbinary -> Varbinary,
+    }
+}
