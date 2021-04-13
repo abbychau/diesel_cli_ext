@@ -51,8 +51,8 @@ pub fn parse(
         ("SmallInt", "i16"), //sqlite
         ("Int4", "i32"),
         ("Integer", "i32"), //sqlite
-        ("Unsigned<Integer","u32"),
-        ("Unsigned<Decimal","f64"),
+        ("Unsigned<Integer", "u32"),
+        ("Unsigned<Decimal", "f64"),
         ("Int8", "i64"),
         ("BigInt", "i64"),
         ("Numeric", "BigDecimal"),
@@ -70,8 +70,15 @@ pub fn parse(
         ("Json", "Json"),
         ("Jsonb", "Jsonb"),
         ("Uuid", "Uuid"),
+        ("Char", "String"),
         ("Varchar", "String"),
         ("Bytea", "Vec<u8>"),
+        ("Binary", "Vec<u8>"),
+        ("Varbinary", "Vec<u8>"),
+        ("Blob", "Vec<u8>"),
+        ("Tinyblob", "Vec<u8>"),
+        ("Mediumblob", "Vec<u8>"),
+        ("Longblob", "Vec<u8>"),
         ("Bit", "bool"),
         ("Inet", "IpNetwork"),
         ("Tinytext", "String"),
@@ -139,17 +146,14 @@ pub fn parse(
                 " ".repeat(indent_depth),
                 &format!(
                     "{}{{trace1}}",
-                    match model_derives.as_ref().map(String::as_str) {
-                        Some(x) => x,
-                        None => "Queryable, Debug",
-                    }
+                    model_derives.as_deref().unwrap_or("Queryable, Debug")
                 )
             ));
         } else if cmp.contains(") {") {
             // this line contains table name
             struct_name = propercase(vec[4 + indent_depth]);
             if is_schema {
-                struct_name = if struct_name.contains(".") {
+                struct_name = if struct_name.contains('.') {
                     let _v: Vec<&str> = struct_name.split('.').collect();
                     _v[1].to_string()
                 } else {
@@ -159,13 +163,13 @@ pub fn parse(
             let x: &[_] = &['(', ')', '{', '}', ',', ' '];
             let mut pks_list: Vec<String> = vec![];
             if vec.len() - 1 > 5 + indent_depth {
-                for i in 5 + indent_depth..vec.len() - 1 {
-                    let pks = vec[i].trim_matches(x);
+                for c in &vec[5 + indent_depth..vec.len() - 1] {
+                    let pks = c.trim_matches(x);
 
                     pks_list.push(pks.to_string());
                 }
 
-                if pks_list.len() > 1 || pks_list[0] != "id".to_string() {
+                if pks_list.len() > 1 || pks_list[0] != "id" {
                     str_model = str_model.replace(
                         "{trace1}",
                         if model_derives.is_none()
@@ -232,7 +236,7 @@ pub fn parse(
             };
             let is_optional = _type.clone().contains("Nullable<");
             let vec_count = _type.clone().matches("Array").count();
-            let b_position = _type.find("[").unwrap_or(_type.len());
+            let b_position = _type.find('[').unwrap_or_else(|| _type.len());
             let mut single_type = _type.clone();
             single_type.truncate(b_position);
             let warning_for_longer_lifetime: String;
@@ -349,8 +353,8 @@ pub fn parse(
     if is_schema {
         str_model.push_str("\n}\n");
     }
-    str_model = str_model.trim().replace("{trace1}","");
-    str_model.push_str("\n");
+    str_model = str_model.trim().replace("{trace1}", "");
+    str_model.push('\n');
     ParseOutput {
         str_proto,
         str_request,
@@ -429,7 +433,10 @@ mod tests {
         assert_eq!(parse_output.str_request.chars().count(), 109);
         assert_eq!(parse_output.str_rpc.chars().count(), 151);
         println!("str_model shows as follow:\n{}", parse_output.str_model);
-        assert_eq!(parse_output.str_model, file_get_contents("test_data/expected_output/schema.rs"));
+        assert_eq!(
+            parse_output.str_model,
+            file_get_contents("test_data/expected_output/schema.rs")
+        );
         assert_eq!(parse_output.type_nd, false);
         assert_eq!(parse_output.type_ndt, true);
         assert_eq!(parse_output.type_nt, false);
@@ -472,7 +479,10 @@ mod tests {
             &mut HashMap::default(),
         );
         print!("{}", parse_output.str_model);
-        assert_eq!(parse_output.str_model,file_get_contents("test_data/expected_output/schema_with_ip_bytea.rs"));
+        assert_eq!(
+            parse_output.str_model,
+            file_get_contents("test_data/expected_output/schema_with_ip_bytea.rs")
+        );
         assert_eq!(parse_output.type_nd, false);
         assert_eq!(parse_output.type_ndt, false);
         assert_eq!(parse_output.type_nt, false);
@@ -491,7 +501,7 @@ mod tests {
             false,
             &mut HashMap::default(),
         );
-        print!("{}",parse_output.str_model);
+        print!("{}", parse_output.str_model);
 
         assert_eq!(parse_output.str_model.chars().count(), 85);
     }
@@ -505,7 +515,7 @@ mod tests {
             false,
             &mut HashMap::default(),
         );
-        print!("{}",parse_output.str_model);
+        print!("{}", parse_output.str_model);
         assert_eq!(parse_output.str_model.chars().count(), 88);
         assert_eq!(parse_output.type_nt, true);
     }
@@ -520,7 +530,10 @@ mod tests {
             &mut HashMap::default(),
         );
         print!("{}", parse_output.str_model);
-        assert_eq!(parse_output.str_model,file_get_contents("test_data/expected_output/schema_with_ies.rs"));
+        assert_eq!(
+            parse_output.str_model,
+            file_get_contents("test_data/expected_output/schema_with_ies.rs")
+        );
     }
 
     #[test]
@@ -559,7 +572,9 @@ mod tests {
             &mut HashMap::default(),
         );
         print!("a:{}", parse_output.str_model);
-        assert_eq!(parse_output.str_model, 
-        file_get_contents("test_data/expected_output/schema_mysql.rs"));
+        assert_eq!(
+            parse_output.str_model,
+            file_get_contents("test_data/expected_output/schema_mysql.rs")
+        );
     }
 }
