@@ -15,6 +15,7 @@ pub struct ParseOutput {
     pub type_ip: bool,
     pub type_uuid: bool,
     pub type_tz: bool,
+    pub type_jsonb: bool,
 }
 
 pub fn parse(
@@ -40,7 +41,8 @@ pub fn parse(
         mut type_ip,
         mut type_uuid,
         mut type_tz,
-    ) = (false, false, false, false, false, false, false);
+        mut type_jsonb
+    ) = (false, false, false, false, false, false, false, false);
 
     let mut count: u16 = 0;
     let mut struct_name: String = "".to_string();
@@ -68,7 +70,7 @@ pub fn parse(
         ("Float", "f32"), //sqlite
         ("Bool", "bool"),
         ("Json", "Json"),
-        ("Jsonb", "Jsonb"),
+        ("Jsonb", "serde_json::Value"),
         ("Uuid", "Uuid"),
         ("Char", "String"),
         ("Varchar", "String"),
@@ -277,6 +279,9 @@ pub fn parse(
             if type_string == "DateTime<Utc>" {
                 type_tz = true;
             }
+            if type_string == "jsonb" {
+                type_jsonb = true;
+            }
             let type_with_vec_wrap = format!(
                 "{}{}{}",
                 "Vec<".repeat(vec_count),
@@ -369,6 +374,7 @@ pub fn parse(
         type_ip,
         type_uuid,
         type_tz,
+        type_jsonb,
     }
 }
 
@@ -575,6 +581,22 @@ mod tests {
         assert_eq!(
             parse_output.str_model,
             file_get_contents("test_data/expected_output/schema_mysql.rs")
+        );
+    }
+
+    #[test]
+    fn build_with_jsonb() {
+        let parse_output = super::parse(
+            file_get_contents("test_data/schema_with_jsonb.rs"),
+            "model",
+            None,
+            false,
+            &mut HashMap::default(),
+        );
+        print!("a:{}", parse_output.str_model);
+        assert_eq!(
+            parse_output.str_model,
+            file_get_contents("test_data/expected_output/schema_jsonb.rs")
         );
     }
 }

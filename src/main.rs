@@ -45,6 +45,9 @@ fn print_normal_dependencies(parse_output: &parse::ParseOutput) {
         println!("use chrono::DateTime;");
         println!("use chrono::offset::Utc;");
     }
+    if parse_output.type_jsonb {
+        println!("use serde_json::Value;");
+    }
 }
 fn print_conversion_dependencies() {
     //todo add selection for ndt and bd
