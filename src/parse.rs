@@ -24,6 +24,7 @@ pub fn parse(
     model_derives: Option<String>,
     add_table_name: bool,
     model_type_mapping: &mut HashMap<String, String>,
+    diesel_version: &str,
 ) -> ParseOutput {
     //Parse
     let mut str_model: String = "".to_string();
@@ -191,12 +192,22 @@ pub fn parse(
             }
 
             if add_table_name {
-                // add #[table_name = "name"]
-                str_model.push_str(&format!(
-                    "{}#[table_name = \"{}\"]\n",
-                    " ".repeat(indent_depth),
-                    vec[4 + indent_depth]
-                ));
+                if diesel_version == "2" {
+                    // add #[diesel(table_name = "name")]
+                    str_model.push_str(&format!(
+                        "{}#[diesel(table_name = \"{}\")]\n",
+                        " ".repeat(indent_depth),
+                        vec[4 + indent_depth]
+                    ));
+                }else{
+                    // add #[table_name = "name"]
+                    str_model.push_str(&format!(
+                        "{}#[table_name = \"{}\"]\n",
+                        " ".repeat(indent_depth),
+                        vec[4 + indent_depth]
+                    ));
+                }
+
             }
 
             str_model.push_str(&format!(
@@ -431,6 +442,7 @@ mod tests {
             None,
             false,
             &mut HashMap::default(),
+            "2"
         );
         println!("str_proto shows as follow:\n{}", parse_output.str_proto);
         assert_eq!(parse_output.str_proto.chars().count(), 266);
@@ -460,6 +472,7 @@ mod tests {
             None,
             false,
             &mut HashMap::default(),
+            "2"
         );
         println!("{}", parse_output.str_model);
         assert_eq!(
@@ -483,6 +496,7 @@ mod tests {
             None,
             false,
             &mut HashMap::default(),
+            "2"
         );
         print!("{}", parse_output.str_model);
         assert_eq!(
@@ -506,6 +520,7 @@ mod tests {
             None,
             false,
             &mut HashMap::default(),
+            "2"
         );
         print!("{}", parse_output.str_model);
 
@@ -520,6 +535,7 @@ mod tests {
             None,
             false,
             &mut HashMap::default(),
+            "2"
         );
         print!("{}", parse_output.str_model);
         assert_eq!(parse_output.str_model.chars().count(), 88);
@@ -534,6 +550,7 @@ mod tests {
             None,
             false,
             &mut HashMap::default(),
+            "2"
         );
         print!("{}", parse_output.str_model);
         assert_eq!(
@@ -550,6 +567,7 @@ mod tests {
             Some("Identifiable".to_string()),
             false,
             &mut HashMap::default(),
+            "2"
         );
         print!("{}", parse_output.str_model);
     }
@@ -562,6 +580,7 @@ mod tests {
             None,
             false,
             &mut HashMap::default(),
+            "2"
         );
         // print!("{}", parse_output.str_model);
         assert_eq!(parse_output.type_uuid, true);
@@ -576,6 +595,7 @@ mod tests {
             None,
             false,
             &mut HashMap::default(),
+            "2"
         );
         print!("a:{}", parse_output.str_model);
         assert_eq!(
@@ -592,11 +612,29 @@ mod tests {
             None,
             false,
             &mut HashMap::default(),
+            "2"
         );
         print!("a:{}", parse_output.str_model);
         assert_eq!(
             parse_output.str_model,
             file_get_contents("test_data/expected_output/schema_jsonb.rs")
+        );
+    }
+
+    #[test]
+    fn build_with_tablename_derives() {
+        let parse_output = super::parse(
+            file_get_contents("test_data/schema_with_tablename_derives.rs"),
+            "model",
+            None,
+            true,
+            &mut HashMap::default(),
+            "2"
+        );
+        print!("a:{}", parse_output.str_model);
+        assert_eq!(
+            parse_output.str_model,
+            file_get_contents("test_data/expected_output/schema_with_tablename_derives.rs")
         );
     }
 }
