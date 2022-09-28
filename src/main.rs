@@ -110,7 +110,7 @@ fn main() {
         "\"TYPE\"",
     );
     opts.optmulti(
-        "dm",
+        "",
         "derive-mod",
         "(NOT ready)This field adds derives for certain tables. (can be set multiple times) e.g. --derive-mod \"table_name +Debug\" --derive-mod \"table_name2 -Debug\"",
         "\"TABLENAME MODIFIER\"",
@@ -127,7 +127,7 @@ fn main() {
     opts.optflag("i", "into_proto", "Set as into_proto output");
     opts.optflag("f", "from_proto", "Set as from_proto output");
     opts.optopt("c", "class_name", "Set proto class name", "CLASS_NAME");
-    opts.optopt("ver", "diesel_version", "Set diesel version (default:2)", "1 or 2");
+    opts.optopt("v", "diesel_version", "Set diesel version (default:2)", "1 or 2");
 
     let matches = match opts.parse(&args[1..]) {
         Ok(m) => m,
@@ -148,7 +148,7 @@ fn main() {
             type_mapping.insert(k[0].to_string(), k[1].to_string());
         }
     }
-    let diesel_version = matches.opt_str("ver").unwrap_or("2".to_string());
+    let diesel_version = matches.opt_str("v").unwrap_or("2".to_string());
     if diesel_version != "1" && diesel_version != "2" {
         panic!("diesel_version must be 1 or 2");
     }
