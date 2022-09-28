@@ -36,17 +36,18 @@ Model Options:
                         This field adds use statements to the top of every
                         table! declaration. (can be set multiple times) e.g.
                         --import_types "diesel::sql_types::*"
+        --derive-mod "TABLENAME MODIFIER"
+                        (NOT ready)This field adds derives for certain tables.
+                        (can be set multiple times) e.g. --derive-mod
+                        "table_name +Debug" --derive-mod "table_name2 -Debug"
     -d, --derive DERIVES
                         set struct derives
-    -t, --add-table-name 
-                        Add #[table_name = x] before structs
 
 Proto Options:
+    -t, --add-table-name 
+                        Add #[table_name = x] before structs
     -p, --proto         Set as proto output
     -i, --into_proto    Set as into_proto output
-    -f, --from_proto    Set as from_proto output
-    -c, --class_name CLASS_NAME
-                        Set proto class name
 ```
 
 (You can see it again by `diesel_ext --help`)

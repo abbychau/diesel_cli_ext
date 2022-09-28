@@ -1,6 +1,6 @@
 [package]
 name = "diesel_cli_ext"
-version = "0.3.8"
+version = "0.3.9"
 authors = ["Abby <i@abby.md>"]
 license = "MIT OR Apache-2.0"
 description = "Provides different tools for projects using the diesel_cli."
