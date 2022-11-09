@@ -184,10 +184,18 @@ pub fn parse(
                             ""
                         },
                     );
-                    str_model.push_str(&" ".repeat(indent_depth));
-                    str_model.push_str("#[primary_key(");
-                    str_model.push_str(&pks_list.join(", "));
-                    str_model.push_str(")]\n");
+                    if diesel_version == "2" {
+                        str_model.push_str(&" ".repeat(indent_depth));
+                        str_model.push_str("#[diesel(primary_key(");
+                        str_model.push_str(&pks_list.join(", "));
+                        str_model.push_str("))]\n");
+
+                    }else {
+                        str_model.push_str(&" ".repeat(indent_depth));
+                        str_model.push_str("#[primary_key(");
+                        str_model.push_str(&pks_list.join(", "));
+                        str_model.push_str(")]\n");
+                    }
                 }
             }
 
