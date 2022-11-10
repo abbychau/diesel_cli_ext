@@ -1,5 +1,5 @@
 #[derive(Queryable, Debug, Identifiable)]
-#[primary_key(key)]
+#[diesel(primary_key(key))]
 #[diesel(table_name = "settings")]
 pub struct Setting {
     pub key: String,
