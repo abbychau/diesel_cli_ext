@@ -130,8 +130,8 @@ pub fn parse(
     let mut is_schema = false;
     // let mut is_excluding = true;
     for line in lines {
-        let cmp = line.to_string();
-        let vec: Vec<&str> = line.split(' ').collect();
+        let cmp = line.trim().to_string();
+        let vec: Vec<&str> = cmp.split(' ').collect();
         let indent_depth = if is_schema { 4 } else { 0 };
 
         if cmp.contains("#[") || cmp.contains("joinable!(") {
@@ -154,7 +154,7 @@ pub fn parse(
             ));
         } else if cmp.contains(") {") {
             // this line contains table name
-            struct_name = propercase(vec[4 + indent_depth]);
+            struct_name = propercase(vec[0]);
             if is_schema {
                 struct_name = if struct_name.contains('.') {
                     let _v: Vec<&str> = struct_name.split('.').collect();
@@ -165,8 +165,8 @@ pub fn parse(
             }
             let x: &[_] = &['(', ')', '{', '}', ',', ' '];
             let mut pks_list: Vec<String> = vec![];
-            if vec.len() - 1 > 5 + indent_depth {
-                for c in &vec[5 + indent_depth..vec.len() - 1] {
+            if vec.len() >= 3 {
+                for c in &vec[1..vec.len() - 1] {
                     let pks = c.trim_matches(x);
 
                     pks_list.push(pks.to_string());
@@ -205,14 +205,14 @@ pub fn parse(
                     str_model.push_str(&format!(
                         "{}#[diesel(table_name = \"{}\")]\n",
                         " ".repeat(indent_depth),
-                        vec[4 + indent_depth]
+                        vec[0]
                     ));
                 }else{
                     // add #[table_name = "name"]
                     str_model.push_str(&format!(
                         "{}#[table_name = \"{}\"]\n",
                         " ".repeat(indent_depth),
-                        vec[4 + indent_depth]
+                        vec[0]
                     ));
                 }
 
@@ -249,7 +249,7 @@ pub fn parse(
                 struct_name
             ));
         } else if cmp.contains("->") {
-            let _type = vec[10 + indent_depth].replace(",", "");
+            let _type = vec[2].replace(",", "");
 
             let dict = match action {
                 "model" => &model_type_dict,
@@ -310,7 +310,7 @@ pub fn parse(
             str_model.push_str(&format!(
                 "{}pub {}: {},\n",
                 " ".repeat(indent_depth + 4),
-                &vec[8 + indent_depth],
+                &vec[0],
                 if is_optional {
                     format!("Option<{}>", type_with_vec_wrap)
                 } else {
@@ -333,13 +333,13 @@ pub fn parse(
             str_proto.push_str(&format!(
                 "    {} {} = {};\n",
                 type_string,
-                &vec[8 + indent_depth],
+                &vec[0],
                 count
             ));
             str_from_proto.push_str(&format!(
                 "            {}: i.get_{}(){},\n",
-                &vec[8 + indent_depth],
-                &vec[8 + indent_depth],
+                &vec[0],
+                &vec[0],
                 match type_string {
                     "string" => ".to_string()",
                     "String" => ".to_string()",
@@ -349,8 +349,8 @@ pub fn parse(
             ));
             str_into_proto.push_str(&format!(
                 "        o.set_{}(i.{}{});\n",
-                &vec[8 + indent_depth],
-                &vec[8 + indent_depth],
+                &vec[0],
+                &vec[0],
                 match type_string {
                     "string" => ".to_string()",
                     "String" => ".to_string()",
