@@ -136,7 +136,7 @@ pub fn parse(
 
         if cmp.contains("#[") || cmp.contains("joinable!(") {
             //do nothing
-        } else if cmp.contains("pub mod ") {
+        } else if cmp.contains("pub mod ") && cmp.trim() != "pub mod sql_types {" {
             if is_schema {
                 str_model.push_str("\n}\n\n");
             }
