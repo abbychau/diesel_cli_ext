@@ -590,9 +590,11 @@ mod tests {
             &mut HashMap::default(),
             "2"
         );
-        // print!("{}", parse_output.str_model);
         assert_eq!(parse_output.type_uuid, true);
-        assert_eq!(parse_output.str_model.chars().count(), 183);
+        assert_eq!(
+            parse_output.str_model,
+            file_get_contents("test_data/expected_output/schema_with_uuid.rs")
+        );
     }
 
     #[test]
