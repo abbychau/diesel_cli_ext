@@ -203,7 +203,7 @@ pub fn parse(
                 if diesel_version == "2" {
                     // add #[diesel(table_name = "name")]
                     str_model.push_str(&format!(
-                        "{}#[diesel(table_name = \"{}\")]\n",
+                        "{}#[diesel(table_name = {})]\n",
                         " ".repeat(indent_depth),
                         vec[0]
                     ));
