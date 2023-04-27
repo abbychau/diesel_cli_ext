@@ -25,6 +25,7 @@ pub fn parse(
     add_table_name: bool,
     model_type_mapping: &mut HashMap<String, String>,
     diesel_version: &str,
+    ignore_plurals:bool
 ) -> ParseOutput {
     //Parse
     let mut str_model: String = "".to_string();
@@ -154,7 +155,7 @@ pub fn parse(
             ));
         } else if cmp.contains(") {") {
             // this line contains table name
-            struct_name = propercase(vec[0]);
+            struct_name = propercase(vec[0],ignore_plurals);
             if is_schema {
                 struct_name = if struct_name.contains('.') {
                     let _v: Vec<&str> = struct_name.split('.').collect();
@@ -397,11 +398,11 @@ pub fn parse(
     }
 }
 
-fn propercase(s: &str) -> String {
+fn propercase(s: &str,ignore_plurals:bool ) -> String {
     let mut next_cap = true;
     let mut store: Vec<char> = Vec::new();
     for c in s.chars() {
-        if c == '_' {
+        if c == '_' || c == '.' {
             next_cap = true;
             continue;
         }
@@ -411,6 +412,10 @@ fn propercase(s: &str) -> String {
         } else {
             store.push(c);
         }
+    }
+    
+    if ignore_plurals{
+        return store.into_iter().collect();
     }
     if store.last() == Some(&'s') {
         store.pop();
