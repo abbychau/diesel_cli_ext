@@ -24,8 +24,7 @@ pub fn parse(
     model_derives: Option<String>,
     add_table_name: bool,
     model_type_mapping: &mut HashMap<String, String>,
-    diesel_version: &str,
-    ignore_plurals:bool
+    diesel_version: &str
 ) -> ParseOutput {
     //Parse
     let mut str_model: String = "".to_string();
@@ -155,7 +154,7 @@ pub fn parse(
             ));
         } else if cmp.contains(") {") {
             // this line contains table name
-            struct_name = propercase(vec[0],ignore_plurals);
+            struct_name = propercase(vec[0]);
             if is_schema {
                 struct_name = if struct_name.contains('.') {
                     let _v: Vec<&str> = struct_name.split('.').collect();
@@ -206,14 +205,14 @@ pub fn parse(
                     str_model.push_str(&format!(
                         "{}#[diesel(table_name = {})]\n",
                         " ".repeat(indent_depth),
-                        vec[0]
+                        vec[0].split('.').last().unwrap()
                     ));
                 }else{
                     // add #[table_name = "name"]
                     str_model.push_str(&format!(
                         "{}#[table_name = \"{}\"]\n",
                         " ".repeat(indent_depth),
-                        vec[0]
+                        vec[0].split('.').last().unwrap()
                     ));
                 }
 
@@ -398,11 +397,16 @@ pub fn parse(
     }
 }
 
-fn propercase(s: &str,ignore_plurals:bool ) -> String {
+fn propercase(s: &str ) -> String {
     let mut next_cap = true;
     let mut store: Vec<char> = Vec::new();
     for c in s.chars() {
-        if c == '_' || c == '.' {
+        if  c == '.' {
+            store.clear();
+            next_cap = true;
+            continue;
+        }
+        if c == '_' {
             next_cap = true;
             continue;
         }
@@ -412,10 +416,6 @@ fn propercase(s: &str,ignore_plurals:bool ) -> String {
         } else {
             store.push(c);
         }
-    }
-    
-    if ignore_plurals{
-        return store.into_iter().collect();
     }
     if store.last() == Some(&'s') {
         store.pop();

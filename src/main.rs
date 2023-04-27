@@ -97,7 +97,6 @@ fn main() {
     opts.optflag("h", "help", "Print this help menu");
 
     opts.optflag("m", "model", "Set as model output");
-    opts.optflag("I", "ignore-plurals", "Set model struct names as is, dont drop s, es or ies from the end of the name");
     opts.optmulti(
         "M",
         "map",
@@ -142,7 +141,6 @@ fn main() {
     //print!("{:?}",matches.opt_defined("m"));
 
     let mut type_mapping: HashMap<String, String> = HashMap::new();
-    let mut ignore_plurals = false;
     if matches.opt_present("M") {
         for x in matches.opt_strs("M") {
             let k: Vec<&str> = x.trim().split(' ').collect();
@@ -156,7 +154,6 @@ fn main() {
     if matches.opt_present("m") {
         action = "model";
         derive = matches.opt_str("d");
-        ignore_plurals = matches.opt_present("I");
     } else if matches.opt_present("i") {
         action = "into_proto";
         class_name = matches
@@ -214,7 +211,6 @@ fn main() {
         matches.opt_present("t"),
         &mut type_mapping,
         &diesel_version,
-        ignore_plurals
     );
 
     //imported types
