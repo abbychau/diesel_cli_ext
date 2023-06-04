@@ -16,6 +16,7 @@ name = "diesel_ext"
 path = "src/main.rs"
 
 [dependencies]
+convert_case = "0.6.0"
 getopts = "0.2"
 toml = "0.5.5"
 

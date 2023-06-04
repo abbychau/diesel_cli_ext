@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use std::io::{stderr, Write};
+use convert_case::{Case, Casing};
 
 pub struct ParseOutput {
     pub str_proto: String,
@@ -25,6 +26,7 @@ pub fn parse(
     add_table_name: bool,
     model_type_mapping: &mut HashMap<String, String>,
     diesel_version: &str,
+    rust_style_fields: bool,
 ) -> ParseOutput {
     //Parse
     let mut str_model: String = "".to_string();
@@ -307,16 +309,47 @@ pub fn parse(
                 type_string,
                 ">".repeat(vec_count)
             );
-            str_model.push_str(&format!(
-                "{}pub {}: {},\n",
-                " ".repeat(indent_depth + 4),
-                &vec[0],
-                if is_optional {
-                    format!("Option<{}>", type_with_vec_wrap)
+            if rust_style_fields {
+                let field_name = &vec[0].to_case(Case::Snake);
+                let field_name = field_name.as_str();
+                if field_name.eq(vec[0]) {
+                    str_model.push_str(&format!(
+                        "{}pub {}: {},\n",
+                        " ".repeat(indent_depth + 4),
+                        field_name,
+                        if is_optional {
+                            format!("Option<{}>", type_with_vec_wrap)
+                        } else {
+                            type_with_vec_wrap
+                        }
+                    ))
                 } else {
-                    type_with_vec_wrap
+                    str_model.push_str(&format!(
+                        "{}#[diesel(column_name = \"{}\")]\n{}pub {}: {},\n",
+                        " ".repeat(indent_depth + 4),
+                        &vec[0],
+                        " ".repeat(indent_depth + 4),
+                        &vec[0].to_case(Case::Snake).as_str(),
+                        if is_optional {
+                            format!("Option<{}>", type_with_vec_wrap)
+                        } else {
+                            type_with_vec_wrap
+                        }
+                    ));
                 }
-            ));
+
+            } else {
+                str_model.push_str(&format!(
+                    "{}pub {}: {},\n",
+                    " ".repeat(indent_depth + 4),
+                    &vec[0],
+                    if is_optional {
+                        format!("Option<{}>", type_with_vec_wrap)
+                    } else {
+                        type_with_vec_wrap
+                    }
+                ));
+            }
             count += 1;
             if count == 1 {
                 let request_name = &format!("Enquire{}Request", &struct_name);
@@ -450,7 +483,8 @@ mod tests {
             None,
             false,
             &mut HashMap::default(),
-            "2"
+            "2",
+            false,
         );
         println!("str_proto shows as follow:\n{}", parse_output.str_proto);
         assert_eq!(parse_output.str_proto.chars().count(), 266);
@@ -480,7 +514,8 @@ mod tests {
             None,
             false,
             &mut HashMap::default(),
-            "2"
+            "2",
+            false
         );
         println!("{}", parse_output.str_model);
         assert_eq!(
@@ -504,7 +539,8 @@ mod tests {
             None,
             false,
             &mut HashMap::default(),
-            "2"
+            "2",
+            false
         );
         print!("{}", parse_output.str_model);
         assert_eq!(
@@ -528,7 +564,8 @@ mod tests {
             None,
             false,
             &mut HashMap::default(),
-            "2"
+            "2",
+            false
         );
         print!("{}", parse_output.str_model);
 
@@ -543,7 +580,8 @@ mod tests {
             None,
             false,
             &mut HashMap::default(),
-            "2"
+            "2",
+            false
         );
         print!("{}", parse_output.str_model);
         assert_eq!(parse_output.str_model.chars().count(), 88);
@@ -558,7 +596,8 @@ mod tests {
             None,
             false,
             &mut HashMap::default(),
-            "2"
+            "2",
+            false
         );
         print!("{}", parse_output.str_model);
         assert_eq!(
@@ -575,7 +614,8 @@ mod tests {
             Some("Identifiable".to_string()),
             false,
             &mut HashMap::default(),
-            "2"
+            "2",
+            false
         );
         print!("{}", parse_output.str_model);
     }
@@ -588,7 +628,8 @@ mod tests {
             None,
             false,
             &mut HashMap::default(),
-            "2"
+            "2",
+            false
         );
         assert_eq!(parse_output.type_uuid, true);
         assert_eq!(
@@ -605,7 +646,8 @@ mod tests {
             None,
             false,
             &mut HashMap::default(),
-            "2"
+            "2",
+            false
         );
         print!("a:{}", parse_output.str_model);
         assert_eq!(
@@ -622,7 +664,8 @@ mod tests {
             None,
             false,
             &mut HashMap::default(),
-            "2"
+            "2",
+            false
         );
         print!("a:{}", parse_output.str_model);
         assert_eq!(
@@ -639,12 +682,31 @@ mod tests {
             None,
             true,
             &mut HashMap::default(),
-            "2"
+            "2",
+            false
         );
         print!("a:{}", parse_output.str_model);
         assert_eq!(
             parse_output.str_model,
             file_get_contents("test_data/expected_output/schema_with_tablename_derives.rs")
+        );
+    }
+
+    #[test]
+    fn build_with_rust_style_fields() {
+        let parse_output = super::parse(
+            file_get_contents("test_data/schema_with_rust_style_fields.rs"),
+            "model",
+            None,
+            false,
+            &mut HashMap::default(),
+            "2",
+            true
+        );
+        print!("a:{}", parse_output.str_model);
+        assert_eq!(
+            parse_output.str_model,
+            file_get_contents("test_data/expected_output/schema_with_rust_style_fields.rs")
         );
     }
 }
