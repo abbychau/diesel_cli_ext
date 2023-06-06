@@ -42,6 +42,8 @@ Model Options:
                         "table_name +Debug" --derive-mod "table_name2 -Debug"
     -d, --derive DERIVES
                         set struct derives
+    -r, --rust_styled_model_fields
+                        set struct field names to be styled according to Rust guidelines
 
 Proto Options:
     -t, --add-table-name 
