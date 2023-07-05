@@ -42,7 +42,7 @@ pub fn parse(
         mut type_ip,
         mut type_uuid,
         mut type_tz,
-        mut type_jsonb
+        mut type_jsonb,
     ) = (false, false, false, false, false, false, false, false);
 
     let mut count: u16 = 0;
@@ -124,7 +124,7 @@ pub fn parse(
     .collect();
 
     for (key, val) in model_type_mapping.iter() {
-        model_type_dict.insert(&key, &val);
+        model_type_dict.insert(key, val);
     }
 
     let mut is_schema = false;
@@ -189,8 +189,7 @@ pub fn parse(
                         str_model.push_str("#[diesel(primary_key(");
                         str_model.push_str(&pks_list.join(", "));
                         str_model.push_str("))]\n");
-
-                    }else {
+                    } else {
                         str_model.push_str(&" ".repeat(indent_depth));
                         str_model.push_str("#[primary_key(");
                         str_model.push_str(&pks_list.join(", "));
@@ -207,7 +206,7 @@ pub fn parse(
                         " ".repeat(indent_depth),
                         vec[0]
                     ));
-                }else{
+                } else {
                     // add #[table_name = "name"]
                     str_model.push_str(&format!(
                         "{}#[table_name = \"{}\"]\n",
@@ -215,7 +214,6 @@ pub fn parse(
                         vec[0]
                     ));
                 }
-
             }
 
             str_model.push_str(&format!(
@@ -249,15 +247,16 @@ pub fn parse(
                 struct_name
             ));
         } else if cmp.contains("->") {
-            let _type = vec[2].replace(",", "");
+            let _type = vec[2].replace(',', "");
 
             let dict = match action {
                 "model" => &model_type_dict,
                 _ => &proto_type_dict,
             };
-            let is_optional = _type.clone().contains("Nullable<");
+            let is_optional = _type.clone().trim().starts_with("Nullable<");
+            let is_nullable_array = _type.clone().contains("Array<Nullable<");
             let vec_count = _type.clone().matches("Array").count();
-            let b_position = _type.find('[').unwrap_or_else(|| _type.len());
+            let b_position = _type.find('[').unwrap_or(_type.len());
             let mut single_type = _type.clone();
             single_type.truncate(b_position);
             let warning_for_longer_lifetime: String;
@@ -265,7 +264,7 @@ pub fn parse(
                 single_type
                     .replace("Array<", "")
                     .replace("Nullable<", "")
-                    .replace(">", "")
+                    .replace('>', "")
                     .trim(),
             ) {
                 Some(name) => name,
@@ -301,20 +300,31 @@ pub fn parse(
             if type_string == "jsonb" {
                 type_jsonb = true;
             }
-            let type_with_vec_wrap = format!(
-                "{}{}{}",
-                "Vec<".repeat(vec_count),
-                type_string,
-                ">".repeat(vec_count)
-            );
+
+            let type_with_wrap = if is_nullable_array {
+                format!(
+                    "{}{}{}",
+                    "Vec<Option<".repeat(vec_count),
+                    type_string,
+                    ">>".repeat(vec_count)
+                )
+            } else {
+                format!(
+                    "{}{}{}",
+                    "Vec<".repeat(vec_count),
+                    type_string,
+                    ">".repeat(vec_count)
+                )
+            };
+
             str_model.push_str(&format!(
                 "{}pub {}: {},\n",
                 " ".repeat(indent_depth + 4),
                 &vec[0],
                 if is_optional {
-                    format!("Option<{}>", type_with_vec_wrap)
+                    format!("Option<{}>", type_with_wrap)
                 } else {
-                    type_with_vec_wrap
+                    type_with_wrap
                 }
             ));
             count += 1;
@@ -330,12 +340,7 @@ pub fn parse(
                 ));
             }
 
-            str_proto.push_str(&format!(
-                "    {} {} = {};\n",
-                type_string,
-                &vec[0],
-                count
-            ));
+            str_proto.push_str(&format!("    {} {} = {};\n", type_string, &vec[0], count));
             str_from_proto.push_str(&format!(
                 "            {}: i.get_{}(){},\n",
                 &vec[0],
@@ -439,7 +444,7 @@ mod tests {
         f.read_to_string(&mut contents)
             .expect("Something went wrong reading the file.");
 
-        contents.replace("\r", "")
+        contents.replace('\r', "")
     }
 
     #[test]
@@ -450,7 +455,7 @@ mod tests {
             None,
             false,
             &mut HashMap::default(),
-            "2"
+            "2",
         );
         println!("str_proto shows as follow:\n{}", parse_output.str_proto);
         assert_eq!(parse_output.str_proto.chars().count(), 266);
@@ -463,13 +468,13 @@ mod tests {
             parse_output.str_model,
             file_get_contents("test_data/expected_output/schema.rs")
         );
-        assert_eq!(parse_output.type_nd, false);
-        assert_eq!(parse_output.type_ndt, true);
-        assert_eq!(parse_output.type_nt, false);
-        assert_eq!(parse_output.type_bd, true);
-        assert_eq!(parse_output.type_ip, false);
-        assert_eq!(parse_output.type_uuid, false);
-        assert_eq!(parse_output.type_tz, true);
+        assert!(!parse_output.type_nd);
+        assert!(parse_output.type_ndt);
+        assert!(!parse_output.type_nt);
+        assert!(parse_output.type_bd);
+        assert!(!parse_output.type_ip);
+        assert!(!parse_output.type_uuid);
+        assert!(parse_output.type_tz);
     }
 
     #[test]
@@ -480,20 +485,20 @@ mod tests {
             None,
             false,
             &mut HashMap::default(),
-            "2"
+            "2",
         );
         println!("{}", parse_output.str_model);
         assert_eq!(
             parse_output.str_model,
             file_get_contents("test_data/expected_output/schema_localmodded.rs")
         );
-        assert_eq!(parse_output.type_nd, false);
-        assert_eq!(parse_output.type_ndt, false);
-        assert_eq!(parse_output.type_nt, false);
-        assert_eq!(parse_output.type_bd, false);
-        assert_eq!(parse_output.type_ip, false);
-        assert_eq!(parse_output.type_uuid, false);
-        assert_eq!(parse_output.type_tz, false);
+        assert!(!parse_output.type_nd);
+        assert!(!parse_output.type_ndt);
+        assert!(!parse_output.type_nt);
+        assert!(!parse_output.type_bd);
+        assert!(!parse_output.type_ip);
+        assert!(!parse_output.type_uuid);
+        assert!(!parse_output.type_tz);
     }
 
     #[test]
@@ -504,20 +509,20 @@ mod tests {
             None,
             false,
             &mut HashMap::default(),
-            "2"
+            "2",
         );
         print!("{}", parse_output.str_model);
         assert_eq!(
             parse_output.str_model,
             file_get_contents("test_data/expected_output/schema_with_ip_bytea.rs")
         );
-        assert_eq!(parse_output.type_nd, false);
-        assert_eq!(parse_output.type_ndt, false);
-        assert_eq!(parse_output.type_nt, false);
-        assert_eq!(parse_output.type_bd, false);
-        assert_eq!(parse_output.type_ip, true);
-        assert_eq!(parse_output.type_uuid, false);
-        assert_eq!(parse_output.type_tz, false);
+        assert!(!parse_output.type_nd);
+        assert!(!parse_output.type_ndt);
+        assert!(!parse_output.type_nt);
+        assert!(!parse_output.type_bd);
+        assert!(parse_output.type_ip);
+        assert!(!parse_output.type_uuid);
+        assert!(!parse_output.type_tz);
     }
 
     #[test]
@@ -528,7 +533,7 @@ mod tests {
             None,
             false,
             &mut HashMap::default(),
-            "2"
+            "2",
         );
         print!("{}", parse_output.str_model);
 
@@ -543,11 +548,11 @@ mod tests {
             None,
             false,
             &mut HashMap::default(),
-            "2"
+            "2",
         );
         print!("{}", parse_output.str_model);
         assert_eq!(parse_output.str_model.chars().count(), 88);
-        assert_eq!(parse_output.type_nt, true);
+        assert!(parse_output.type_nt);
     }
 
     #[test]
@@ -558,7 +563,7 @@ mod tests {
             None,
             false,
             &mut HashMap::default(),
-            "2"
+            "2",
         );
         print!("{}", parse_output.str_model);
         assert_eq!(
@@ -575,7 +580,7 @@ mod tests {
             Some("Identifiable".to_string()),
             false,
             &mut HashMap::default(),
-            "2"
+            "2",
         );
         print!("{}", parse_output.str_model);
     }
@@ -588,9 +593,9 @@ mod tests {
             None,
             false,
             &mut HashMap::default(),
-            "2"
+            "2",
         );
-        assert_eq!(parse_output.type_uuid, true);
+        assert!(parse_output.type_uuid);
         assert_eq!(
             parse_output.str_model,
             file_get_contents("test_data/expected_output/schema_with_uuid.rs")
@@ -605,7 +610,7 @@ mod tests {
             None,
             false,
             &mut HashMap::default(),
-            "2"
+            "2",
         );
         print!("a:{}", parse_output.str_model);
         assert_eq!(
@@ -622,7 +627,7 @@ mod tests {
             None,
             false,
             &mut HashMap::default(),
-            "2"
+            "2",
         );
         print!("a:{}", parse_output.str_model);
         assert_eq!(
@@ -639,7 +644,7 @@ mod tests {
             None,
             true,
             &mut HashMap::default(),
-            "2"
+            "2",
         );
         print!("a:{}", parse_output.str_model);
         assert_eq!(

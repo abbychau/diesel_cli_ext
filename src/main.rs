@@ -121,13 +121,17 @@ fn main() {
         "add-table-name",
         "Add #[table_name = x] before structs",
     );
-    
 
     opts.optflag("p", "proto", "Set as proto output");
     opts.optflag("i", "into_proto", "Set as into_proto output");
     opts.optflag("f", "from_proto", "Set as from_proto output");
     opts.optopt("c", "class_name", "Set proto class name", "CLASS_NAME");
-    opts.optopt("v", "diesel_version", "Set diesel version (default:2)", "1 or 2");
+    opts.optopt(
+        "v",
+        "diesel_version",
+        "Set diesel version (default:2)",
+        "1 or 2",
+    );
 
     let matches = match opts.parse(&args[1..]) {
         Ok(m) => m,
@@ -184,7 +188,7 @@ fn main() {
                     .read_to_string(&mut contents)
                     .expect("diesel.toml exists but not readable");
                 let values = contents.parse::<Value>().unwrap();
-                let file_path = values["print_schema"]["file"].to_string().replace("\"", "");
+                let file_path = values["print_schema"]["file"].to_string().replace('\"', "");
                 if !Path::new(&file_path).exists() {
                     print!(
                         "Found diesel.toml and read a path: {}. However, this file does not exist.",
@@ -211,7 +215,7 @@ fn main() {
         derive,
         matches.opt_present("t"),
         &mut type_mapping,
-        &diesel_version
+        &diesel_version,
     );
 
     //imported types
