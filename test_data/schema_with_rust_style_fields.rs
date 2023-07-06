@@ -56,13 +56,13 @@ table! {
 // CREATE TABLE numeric_types (
 //   `id` INT NOT NULL,
 //   `double` DOUBLE NOT NULL,
-//   `nullable_double` DOUBLE NULL,
+//   `nullableDouble` DOUBLE NULL,
 //   `tinyint` TINYINT NOT NULL,
 //   `nullableTinyint` TINYINT NULL,
 //   `smallint` SMALLINT NOT NULL,
 //   `nullableSmallint` SMALLINT NULL,
 //   `bigint` BIGINT NOT NULL,
-//   `nullableBigInt` BIGINT NULL,
+//   `nullable_bigint` BIGINT NULL,
 //   PRIMARY KEY (`id`));
 table! {
     numeric_types (id) {
@@ -120,5 +120,14 @@ table! {
         varchar -> Varchar,
         binary -> Binary,
         varbinary -> Varbinary,
+    }
+}
+
+table! {
+    uppercase_fields (id) {
+        ID -> Integer,
+        NAME -> Varchar,
+        CREATED_AT -> Nullable<Datetime>,
+        UPDATED_AT -> Nullable<Datetime>,
     }
 }

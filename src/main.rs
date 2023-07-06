@@ -121,7 +121,8 @@ fn main() {
         "add-table-name",
         "Add #[table_name = x] before structs",
     );
-    
+    opts.optflag("r", "rust_styled_model_fields", "When creating models fields, will use rust styled names instead of database styled names");
+
 
     opts.optflag("p", "proto", "Set as proto output");
     opts.optflag("i", "into_proto", "Set as into_proto output");
@@ -139,6 +140,8 @@ fn main() {
         return;
     }
     //print!("{:?}",matches.opt_defined("m"));
+
+    let rust_styled_fields = matches.opt_present("r");
 
     let mut type_mapping: HashMap<String, String> = HashMap::new();
     if matches.opt_present("M") {
@@ -211,6 +214,7 @@ fn main() {
         matches.opt_present("t"),
         &mut type_mapping,
         &diesel_version,
+        rust_styled_fields,
     );
 
     //imported types
