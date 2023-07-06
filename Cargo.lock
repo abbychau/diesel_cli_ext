@@ -13,7 +13,7 @@ dependencies = [
 
 [[package]]
 name = "diesel_cli_ext"
-version = "0.3.11"
+version = "0.3.13"
 dependencies = [
  "convert_case",
  "getopts",
