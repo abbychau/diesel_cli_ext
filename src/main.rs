@@ -144,7 +144,6 @@ fn main() {
     let rust_styled_fields = matches.opt_present("r");
 
     let mut type_mapping: HashMap<String, String> = HashMap::new();
-
     if matches.opt_present("M") {
         for x in matches.opt_strs("M") {
             let k: Vec<&str> = x.trim().split(' ').collect();
