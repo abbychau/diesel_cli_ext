@@ -1,3 +1,4 @@
+use convert_case::{Case, Casing};
 use std::collections::HashMap;
 use std::io::{stderr, Write};
 
@@ -25,6 +26,7 @@ pub fn parse(
     add_table_name: bool,
     model_type_mapping: &mut HashMap<String, String>,
     diesel_version: &str,
+    rust_style_fields: bool,
 ) -> ParseOutput {
     //Parse
     let mut str_model: String = "".to_string();
@@ -204,14 +206,14 @@ pub fn parse(
                     str_model.push_str(&format!(
                         "{}#[diesel(table_name = {})]\n",
                         " ".repeat(indent_depth),
-                        vec[0]
+                        vec[0].split('.').last().unwrap()
                     ));
                 } else {
                     // add #[table_name = "name"]
                     str_model.push_str(&format!(
                         "{}#[table_name = \"{}\"]\n",
                         " ".repeat(indent_depth),
-                        vec[0]
+                        vec[0].split('.').last().unwrap()
                     ));
                 }
             }
@@ -406,6 +408,11 @@ fn propercase(s: &str) -> String {
     let mut next_cap = true;
     let mut store: Vec<char> = Vec::new();
     for c in s.chars() {
+        if c == '.' {
+            store.clear();
+            next_cap = true;
+            continue;
+        }
         if c == '_' {
             next_cap = true;
             continue;
@@ -456,6 +463,7 @@ mod tests {
             false,
             &mut HashMap::default(),
             "2",
+            false,
         );
         println!("str_proto shows as follow:\n{}", parse_output.str_proto);
         assert_eq!(parse_output.str_proto.chars().count(), 266);
@@ -486,6 +494,7 @@ mod tests {
             false,
             &mut HashMap::default(),
             "2",
+            false,
         );
         println!("{}", parse_output.str_model);
         assert_eq!(
@@ -510,6 +519,7 @@ mod tests {
             false,
             &mut HashMap::default(),
             "2",
+            false,
         );
         print!("{}", parse_output.str_model);
         assert_eq!(
@@ -534,6 +544,7 @@ mod tests {
             false,
             &mut HashMap::default(),
             "2",
+            false,
         );
         print!("{}", parse_output.str_model);
 
@@ -549,6 +560,7 @@ mod tests {
             false,
             &mut HashMap::default(),
             "2",
+            false,
         );
         print!("{}", parse_output.str_model);
         assert_eq!(parse_output.str_model.chars().count(), 88);
@@ -564,6 +576,7 @@ mod tests {
             false,
             &mut HashMap::default(),
             "2",
+            false,
         );
         print!("{}", parse_output.str_model);
         assert_eq!(
@@ -581,6 +594,7 @@ mod tests {
             false,
             &mut HashMap::default(),
             "2",
+            false,
         );
         print!("{}", parse_output.str_model);
     }
@@ -594,6 +608,7 @@ mod tests {
             false,
             &mut HashMap::default(),
             "2",
+            false,
         );
         assert!(parse_output.type_uuid);
         assert_eq!(
@@ -611,6 +626,7 @@ mod tests {
             false,
             &mut HashMap::default(),
             "2",
+            false,
         );
         print!("a:{}", parse_output.str_model);
         assert_eq!(
@@ -628,6 +644,7 @@ mod tests {
             false,
             &mut HashMap::default(),
             "2",
+            false,
         );
         print!("a:{}", parse_output.str_model);
         assert_eq!(
@@ -645,11 +662,30 @@ mod tests {
             true,
             &mut HashMap::default(),
             "2",
+            false,
         );
         print!("a:{}", parse_output.str_model);
         assert_eq!(
             parse_output.str_model,
             file_get_contents("test_data/expected_output/schema_with_tablename_derives.rs")
+        );
+    }
+
+    #[test]
+    fn build_with_rust_style_fields() {
+        let parse_output = super::parse(
+            file_get_contents("test_data/schema_with_rust_style_fields.rs"),
+            "model",
+            None,
+            false,
+            &mut HashMap::default(),
+            "2",
+            true,
+        );
+        print!("a:{}", parse_output.str_model);
+        assert_eq!(
+            parse_output.str_model,
+            file_get_contents("test_data/expected_output/schema_with_rust_style_fields.rs")
         );
     }
 }
