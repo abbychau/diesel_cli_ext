@@ -319,16 +319,32 @@ pub fn parse(
                 )
             };
 
-            str_model.push_str(&format!(
-                "{}pub {}: {},\n",
-                " ".repeat(indent_depth + 4),
-                &vec[0],
-                if is_optional {
-                    format!("Option<{}>", type_with_wrap)
-                } else {
-                    type_with_wrap
-                }
-            ));
+            if rust_style_fields && !vec[0].is_case(Case::Snake) {
+                let field_name = vec[0].to_case(Case::Snake);
+                str_model.push_str(&format!(
+                    "{}#[diesel(column_name = \"{}\")]\n{}pub {}: {},\n",
+                    " ".repeat(indent_depth + 4),
+                    &vec[0],
+                    " ".repeat(indent_depth + 4),
+                    field_name,
+                    if is_optional {
+                        format!("Option<{}>", type_with_wrap)
+                    } else {
+                        type_with_wrap
+                    }
+                ));
+            } else {
+                str_model.push_str(&format!(
+                    "{}pub {}: {},\n",
+                    " ".repeat(indent_depth + 4),
+                    &vec[0],
+                    if is_optional {
+                        format!("Option<{}>", type_with_wrap)
+                    } else {
+                        type_with_wrap
+                    }
+                ));
+            }
             count += 1;
             if count == 1 {
                 let request_name = &format!("Enquire{}Request", &struct_name);
