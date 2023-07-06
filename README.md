@@ -1,6 +1,6 @@
 # Diesel CLI Extension
 
-Diesel CLI Extension is a tool-belt that aids Diesel CLI after it built schema.rs .
+Diesel CLI Extension is a tool-belt that aids Diesel CLI after it built schema.rs.
 
 [![Build Status](https://travis-ci.org/abbychau/diesel_cli_ext.svg)](https://travis-ci.org/abbychau/diesel_cli_ext)
 [![Crates.io](https://img.shields.io/crates/v/diesel_cli_ext.svg)](https://crates.io/crates/diesel_cli_ext)
@@ -54,7 +54,7 @@ Proto Options:
 
 (You can see it again by `diesel_ext --help`)
 
-Output demostrations as below...
+Output demonstrations are as below...
 
 
 ### To generate model structs:
@@ -80,7 +80,7 @@ pub struct Order {
 }
 ```
 
-### To generate prelimitive proto file:
+### To generate prelimiting proto file:
 `diesel_ext -p > myproto.proto`, `diesel_ext --proto > myproto.proto`
 
 Sample output:
