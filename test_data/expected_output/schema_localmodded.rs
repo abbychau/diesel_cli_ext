@@ -2,14 +2,14 @@ pub mod my_schema {
 
     #[derive(Queryable, Debug, Identifiable)]
     #[diesel(primary_key(my_pk))]
-    pub struct myTable {
+    pub struct MyTable {
         pub my_pk: i32,
         pub some_field: String,
     }
 
     #[derive(Queryable, Debug, Identifiable)]
     #[diesel(primary_key(my_pk))]
-    pub struct myTable2 {
+    pub struct MyTable2 {
         pub my_pk: i32,
         pub some_field: String,
     }
@@ -20,7 +20,7 @@ pub mod my_other_schema {
 
     #[derive(Queryable, Debug, Identifiable)]
     #[diesel(primary_key(my_pk))]
-    pub struct myTable {
+    pub struct MyTable {
         pub my_pk: i32,
         pub some_field: String,
     }
@@ -37,7 +37,7 @@ pub mod tenant {
 
     #[derive(Queryable, Debug, Identifiable)]
     #[diesel(primary_key(my_pk))]
-    pub struct myTable {
+    pub struct MyTable {
         pub my_pk: i32,
         pub some_field: String,
     }
