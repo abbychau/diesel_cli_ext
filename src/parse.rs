@@ -19,7 +19,6 @@ pub struct ParseOutput {
     pub type_jsonb: bool,
 }
 
-#[derive(Default)]
 pub struct ParseArguments {
     pub contents: String,
     pub action: String,
@@ -29,6 +28,21 @@ pub struct ParseArguments {
     pub diesel_version: String,
     pub rust_styled_fields: bool,
     pub struct_name_override: HashMap<String, String>,
+}
+
+impl Default for ParseArguments {
+    fn default() -> Self {
+        Self {
+            contents: Default::default(),
+            action: Default::default(),
+            model_derives: Default::default(),
+            add_table_name: Default::default(),
+            model_type_mapping: Default::default(),
+            diesel_version: "2".into(),
+            rust_styled_fields: Default::default(),
+            struct_name_override: Default::default(),
+        }
+    }
 }
 
 pub fn parse(args: ParseArguments) -> ParseOutput {
@@ -485,7 +499,6 @@ mod tests {
         let parse_output = super::parse(ParseArguments {
             action: "model".into(),
             contents: file_get_contents("test_data/schema.rs"),
-            diesel_version: "2".into(),
             ..Default::default()
         });
         println!("str_proto shows as follow:\n{}", parse_output.str_proto);
@@ -513,7 +526,6 @@ mod tests {
         let parse_output = super::parse(ParseArguments {
             contents: file_get_contents("test_data/schema_localmodded.rs"),
             action: "model".into(),
-            diesel_version: "2".into(),
             ..Default::default()
         });
         println!("{}", parse_output.str_model);
@@ -535,7 +547,6 @@ mod tests {
         let parse_output = super::parse(ParseArguments {
             contents: file_get_contents("test_data/schema_with_ip_bytea.rs"),
             action: "model".into(),
-            diesel_version: "2".into(),
             ..Default::default()
         });
         print!("{}", parse_output.str_model);
@@ -557,7 +568,6 @@ mod tests {
         let parse_output = super::parse(ParseArguments {
             contents: file_get_contents("test_data/schema_with_tab.rs"),
             action: "model".into(),
-            diesel_version: "2".into(),
             ..Default::default()
         });
         print!("{}", parse_output.str_model);
@@ -570,7 +580,6 @@ mod tests {
         let parse_output = super::parse(ParseArguments {
             contents: file_get_contents("test_data/schema_with_time.rs"),
             action: "model".into(),
-            diesel_version: "2".into(),
             ..Default::default()
         });
         print!("{}", parse_output.str_model);
@@ -583,7 +592,6 @@ mod tests {
         let parse_output = super::parse(ParseArguments {
             contents: file_get_contents("test_data/schema_with_ies.rs"),
             action: "model".into(),
-            diesel_version: "2".into(),
             ..Default::default()
         });
         print!("{}", parse_output.str_model);
@@ -598,7 +606,6 @@ mod tests {
         let parse_output = super::parse(ParseArguments {
             contents: file_get_contents("test_data/schema.rs"),
             action: "model".into(),
-            diesel_version: "2".into(),
             ..Default::default()
         });
         print!("{}", parse_output.str_model);
@@ -609,7 +616,6 @@ mod tests {
         let parse_output = super::parse(ParseArguments {
             contents: file_get_contents("test_data/schema_uuid.rs"),
             action: "model".into(),
-            diesel_version: "2".into(),
             ..Default::default()
         });
         assert!(parse_output.type_uuid);
@@ -624,7 +630,6 @@ mod tests {
         let parse_output = super::parse(ParseArguments {
             contents: file_get_contents("test_data/schema_mysql.rs"),
             action: "model".into(),
-            diesel_version: "2".into(),
             ..Default::default()
         });
         print!("a:{}", parse_output.str_model);
@@ -639,7 +644,6 @@ mod tests {
         let parse_output = super::parse(ParseArguments {
             contents: file_get_contents("test_data/schema_with_jsonb.rs"),
             action: "model".into(),
-            diesel_version: "2".into(),
             ..Default::default()
         });
         print!("a:{}", parse_output.str_model);
@@ -654,7 +658,6 @@ mod tests {
         let parse_output = super::parse(ParseArguments {
             contents: file_get_contents("test_data/schema_with_tablename_derives.rs"),
             action: "model".into(),
-            diesel_version: "2".into(),
             add_table_name: true,
             ..Default::default()
         });
@@ -670,7 +673,6 @@ mod tests {
         let parse_output = super::parse(ParseArguments {
             contents: file_get_contents("test_data/schema_with_rust_style_fields.rs"),
             action: "model".into(),
-            diesel_version: "2".into(),
             rust_styled_fields: true,
             ..Default::default()
         });
@@ -686,7 +688,6 @@ mod tests {
         let parse_output = super::parse(ParseArguments {
             contents: file_get_contents("test_data/schema_with_struct_name_override.rs"),
             action: "model".into(),
-            diesel_version: "2".into(),
             add_table_name: true,
             struct_name_override: HashMap::from([(
                 "my_table".to_string(),
