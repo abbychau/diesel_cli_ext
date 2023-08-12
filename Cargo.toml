@@ -23,3 +23,6 @@ toml = "0.5.5"
 [badges]
 maintenance = { status = "actively-developed" }
 travis-ci = { repository = "abbychau/diesel_cli_ext" }
+
+[dev-dependencies]
+pretty_assertions = "1.4.0"
