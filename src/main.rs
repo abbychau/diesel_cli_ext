@@ -1,4 +1,5 @@
 use getopts::Options;
+use parse::ParseArguments;
 use std::collections::HashMap;
 use std::env;
 use std::fs::File;
@@ -89,7 +90,7 @@ fn main() {
     //Read in
     let args: Vec<String> = env::args().collect();
     let action;
-    let mut derive: Option<String> = None;
+    let mut model_derives: Option<String> = None;
     let mut class_name: String = "".to_string();
     let program = args[0].clone();
     let mut opts = Options::new();
@@ -151,11 +152,11 @@ fn main() {
 
     let rust_styled_fields = matches.opt_present("r");
 
-    let mut type_mapping: HashMap<String, String> = HashMap::new();
+    let mut model_type_mapping: HashMap<String, String> = HashMap::new();
     if matches.opt_present("M") {
         for x in matches.opt_strs("M") {
             let k: Vec<&str> = x.trim().split(' ').collect();
-            type_mapping.insert(k[0].to_string(), k[1].to_string());
+            model_type_mapping.insert(k[0].to_string(), k[1].to_string());
         }
     }
     let diesel_version = matches.opt_str("v").unwrap_or("2".to_string());
@@ -164,7 +165,7 @@ fn main() {
     }
     if matches.opt_present("m") {
         action = "model";
-        derive = matches.opt_str("d");
+        model_derives = matches.opt_str("d");
     } else if matches.opt_present("i") {
         action = "into_proto";
         class_name = matches
@@ -180,7 +181,7 @@ fn main() {
     } else {
         //default as m
         action = "model";
-        derive = matches.opt_str("d");
+        model_derives = matches.opt_str("d");
     }
 
     let path = match matches.opt_str("s") {
@@ -215,15 +216,15 @@ fn main() {
     f.read_to_string(&mut contents)
         .expect("Something went wrong reading the file.");
 
-    let parse_output = parse::parse(
+    let parse_output = parse::parse(ParseArguments {
         contents,
-        action,
-        derive,
-        matches.opt_present("t"),
-        &mut type_mapping,
-        &diesel_version,
+        action: action.into(),
+        model_derives,
+        add_table_name: matches.opt_present("t"),
+        model_type_mapping,
+        diesel_version,
         rust_styled_fields,
-    );
+    });
 
     //imported types
     let mut import_type_string = String::new();
