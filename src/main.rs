@@ -1,4 +1,5 @@
 use getopts::Options;
+use parse::ParseArguments;
 use std::collections::HashMap;
 use std::env;
 use std::fs::File;
@@ -88,8 +89,7 @@ fn print_usage(program: &str, opts: Options) {
 fn main() {
     //Read in
     let args: Vec<String> = env::args().collect();
-    let action;
-    let mut derive: Option<String> = None;
+    let mut model_derives: Option<String> = None;
     let mut class_name: String = "".to_string();
     let program = args[0].clone();
     let mut opts = Options::new();
@@ -114,6 +114,12 @@ fn main() {
         "derive-mod",
         "(NOT ready)This field adds derives for certain tables. (can be set multiple times) e.g. --derive-mod \"table_name +Debug\" --derive-mod \"table_name2 -Debug\"",
         "\"TABLENAME MODIFIER\"",
+    );
+    opts.optmulti(
+        "n",
+        "struct-name-override",
+        "This field overrides the generated struct name for certain tables. (can be set multiple times) e.g. --struct-name-override \"foo bar\" --struct-name-override \"bar baz\"",
+        "\"STRUCT NAME OVERRIDE\"",
     );
     opts.optopt("d", "derive", "set struct derives", "DERIVES");
     opts.optflag(
@@ -151,37 +157,46 @@ fn main() {
 
     let rust_styled_fields = matches.opt_present("r");
 
-    let mut type_mapping: HashMap<String, String> = HashMap::new();
+    let mut model_type_mapping: HashMap<String, String> = HashMap::new();
     if matches.opt_present("M") {
         for x in matches.opt_strs("M") {
             let k: Vec<&str> = x.trim().split(' ').collect();
-            type_mapping.insert(k[0].to_string(), k[1].to_string());
+            model_type_mapping.insert(k[0].to_string(), k[1].to_string());
         }
     }
+
+    let mut struct_name_override: HashMap<String, String> = HashMap::new();
+    if matches.opt_present("n") {
+        for x in matches.opt_strs("n") {
+            let k: Vec<&str> = x.trim().split(' ').collect();
+            struct_name_override.insert(k[0].to_string(), k[1].to_string());
+        }
+    }
+
     let diesel_version = matches.opt_str("v").unwrap_or("2".to_string());
     if diesel_version != "1" && diesel_version != "2" {
         panic!("diesel_version must be 1 or 2");
     }
-    if matches.opt_present("m") {
-        action = "model";
-        derive = matches.opt_str("d");
+    let action = if matches.opt_present("m") {
+        model_derives = matches.opt_str("d");
+        "model"
     } else if matches.opt_present("i") {
-        action = "into_proto";
         class_name = matches
             .opt_str("c")
             .unwrap_or_else(|| "class_name".to_string());
+        "into_proto"
     } else if matches.opt_present("f") {
-        action = "from_proto";
         class_name = matches
             .opt_str("c")
             .unwrap_or_else(|| "class_name".to_string());
+        "from_proto"
     } else if matches.opt_present("p") {
-        action = "proto";
+        "proto"
     } else {
         //default as m
-        action = "model";
-        derive = matches.opt_str("d");
-    }
+        model_derives = matches.opt_str("d");
+        "model"
+    };
 
     let path = match matches.opt_str("s") {
         Some(file2) => file2,
@@ -215,15 +230,16 @@ fn main() {
     f.read_to_string(&mut contents)
         .expect("Something went wrong reading the file.");
 
-    let parse_output = parse::parse(
+    let parse_output = parse::parse(ParseArguments {
         contents,
-        action,
-        derive,
-        matches.opt_present("t"),
-        &mut type_mapping,
-        &diesel_version,
+        action: action.into(),
+        model_derives,
+        add_table_name: matches.opt_present("t"),
+        model_type_mapping,
+        diesel_version,
         rust_styled_fields,
-    );
+        struct_name_override,
+    });
 
     //imported types
     let mut import_type_string = String::new();
