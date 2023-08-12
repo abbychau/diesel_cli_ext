@@ -28,6 +28,7 @@ pub struct ParseArguments {
     pub model_type_mapping: HashMap<String, String>,
     pub diesel_version: String,
     pub rust_styled_fields: bool,
+    pub struct_name_override: HashMap<String, String>,
 }
 
 pub fn parse(args: ParseArguments) -> ParseOutput {
@@ -159,7 +160,12 @@ pub fn parse(args: ParseArguments) -> ParseOutput {
             ));
         } else if cmp.contains(") {") {
             // this line contains table name
-            struct_name = propercase(vec[0]);
+            struct_name = vec[0].to_string();
+            struct_name = match args.struct_name_override.get(&struct_name) {
+                Some(struct_name) => struct_name.into(),
+                None => propercase(&struct_name),
+            };
+
             if is_schema {
                 struct_name = if struct_name.contains('.') {
                     let _v: Vec<&str> = struct_name.split('.').collect();
@@ -460,7 +466,7 @@ fn propercase(s: &str) -> String {
 
 #[cfg(test)]
 mod tests {
-    use std::io::prelude::*;
+    use std::{collections::HashMap, io::prelude::*};
 
     use crate::parse::ParseArguments;
 
@@ -681,6 +687,11 @@ mod tests {
             contents: file_get_contents("test_data/schema_with_struct_name_override.rs"),
             action: "model".into(),
             diesel_version: "2".into(),
+            add_table_name: true,
+            struct_name_override: HashMap::from([(
+                "my_table".to_string(),
+                "MyOverriddenTable".to_string(),
+            )]),
             ..Default::default()
         });
         print!("a:{}", parse_output.str_model);
