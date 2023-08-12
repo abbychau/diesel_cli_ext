@@ -89,7 +89,6 @@ fn print_usage(program: &str, opts: Options) {
 fn main() {
     //Read in
     let args: Vec<String> = env::args().collect();
-    let action;
     let mut model_derives: Option<String> = None;
     let mut class_name: String = "".to_string();
     let program = args[0].clone();
@@ -163,26 +162,26 @@ fn main() {
     if diesel_version != "1" && diesel_version != "2" {
         panic!("diesel_version must be 1 or 2");
     }
-    if matches.opt_present("m") {
-        action = "model";
+    let action = if matches.opt_present("m") {
         model_derives = matches.opt_str("d");
+        "model"
     } else if matches.opt_present("i") {
-        action = "into_proto";
         class_name = matches
             .opt_str("c")
             .unwrap_or_else(|| "class_name".to_string());
+        "into_proto"
     } else if matches.opt_present("f") {
-        action = "from_proto";
         class_name = matches
             .opt_str("c")
             .unwrap_or_else(|| "class_name".to_string());
+        "from_proto"
     } else if matches.opt_present("p") {
-        action = "proto";
+        "proto"
     } else {
         //default as m
-        action = "model";
         model_derives = matches.opt_str("d");
-    }
+        "model"
+    };
 
     let path = match matches.opt_str("s") {
         Some(file2) => file2,
