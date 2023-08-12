@@ -674,4 +674,19 @@ mod tests {
             file_get_contents("test_data/expected_output/schema_with_rust_style_fields.rs")
         );
     }
+
+    #[test]
+    fn build_with_struct_name_override() {
+        let parse_output = super::parse(ParseArguments {
+            contents: file_get_contents("test_data/schema_with_struct_name_override.rs"),
+            action: "model".into(),
+            diesel_version: "2".into(),
+            ..Default::default()
+        });
+        print!("a:{}", parse_output.str_model);
+        assert_eq!(
+            parse_output.str_model,
+            file_get_contents("test_data/expected_output/schema_with_struct_name_override.rs")
+        );
+    }
 }
