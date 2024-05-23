@@ -19,15 +19,33 @@ pub struct ParseOutput {
     pub type_jsonb: bool,
 }
 
-pub fn parse(
-    contents: String,
-    action: &str,
-    model_derives: Option<String>,
-    add_table_name: bool,
-    model_type_mapping: &mut HashMap<String, String>,
-    diesel_version: &str,
-    rust_style_fields: bool,
-) -> ParseOutput {
+pub struct ParseArguments {
+    pub contents: String,
+    pub action: String,
+    pub model_derives: Option<String>,
+    pub add_table_name: bool,
+    pub model_type_mapping: HashMap<String, String>,
+    pub diesel_version: String,
+    pub rust_styled_fields: bool,
+    pub struct_name_override: HashMap<String, String>,
+}
+
+impl Default for ParseArguments {
+    fn default() -> Self {
+        Self {
+            contents: Default::default(),
+            action: Default::default(),
+            model_derives: Default::default(),
+            add_table_name: Default::default(),
+            model_type_mapping: Default::default(),
+            diesel_version: "2".into(),
+            rust_styled_fields: Default::default(),
+            struct_name_override: Default::default(),
+        }
+    }
+}
+
+pub fn parse(args: ParseArguments) -> ParseOutput {
     //Parse
     let mut str_model: String = "".to_string();
     let mut str_proto: String = "".to_string();
@@ -49,7 +67,7 @@ pub fn parse(
 
     let mut count: u16 = 0;
     let mut struct_name: String = "".to_string();
-    let content = contents.replace('\t', "    ");
+    let content = args.contents.replace('\t', "    ");
     let lines = content.split('\n');
     let mut model_type_dict: HashMap<&str, &str> = [
         ("Int2", "i16"),
@@ -125,7 +143,7 @@ pub fn parse(
     .cloned()
     .collect();
 
-    for (key, val) in model_type_mapping.iter() {
+    for (key, val) in args.model_type_mapping.iter() {
         model_type_dict.insert(key, val);
     }
 
@@ -151,12 +169,17 @@ pub fn parse(
                 " ".repeat(indent_depth),
                 &format!(
                     "{}{{trace1}}",
-                    model_derives.as_deref().unwrap_or("Queryable, Debug")
+                    args.model_derives.as_deref().unwrap_or("Queryable, Debug")
                 )
             ));
         } else if cmp.contains(") {") {
             // this line contains table name
-            struct_name = propercase(vec[0]);
+            struct_name = vec[0].to_string();
+            struct_name = match args.struct_name_override.get(&struct_name) {
+                Some(struct_name) => struct_name.into(),
+                None => propercase(&struct_name),
+            };
+
             if is_schema {
                 struct_name = if struct_name.contains('.') {
                     let _v: Vec<&str> = struct_name.split('.').collect();
@@ -177,16 +200,16 @@ pub fn parse(
                 if pks_list.len() > 1 || pks_list[0] != "id" {
                     str_model = str_model.replace(
                         "{trace1}",
-                        if model_derives.is_none()
-                            || (model_derives.is_some()
-                                && !model_derives.clone().unwrap().contains("Identifiable"))
+                        if args.model_derives.is_none()
+                            || (args.model_derives.is_some()
+                                && !args.model_derives.clone().unwrap().contains("Identifiable"))
                         {
                             ", Identifiable"
                         } else {
                             ""
                         },
                     );
-                    if diesel_version == "2" {
+                    if args.diesel_version == "2" {
                         str_model.push_str(&" ".repeat(indent_depth));
                         str_model.push_str("#[diesel(primary_key(");
                         str_model.push_str(&pks_list.join(", "));
@@ -200,8 +223,8 @@ pub fn parse(
                 }
             }
 
-            if add_table_name {
-                if diesel_version == "2" {
+            if args.add_table_name {
+                if args.diesel_version == "2" {
                     // add #[diesel(table_name = "name")]
                     str_model.push_str(&format!(
                         "{}#[diesel(table_name = {})]\n",
@@ -251,7 +274,7 @@ pub fn parse(
         } else if cmp.contains("->") {
             let _type = vec[2].replace(',', "");
 
-            let dict = match action {
+            let dict = match args.action.as_str() {
                 "model" => &model_type_dict,
                 _ => &proto_type_dict,
             };
@@ -319,7 +342,7 @@ pub fn parse(
                 )
             };
 
-            if rust_style_fields && !vec[0].is_case(Case::Snake) {
+            if args.rust_styled_fields && !vec[0].is_case(Case::Snake) {
                 let field_name = vec[0].to_case(Case::Snake);
                 str_model.push_str(&format!(
                     "{}#[diesel(column_name = \"{}\")]\n{}pub {}: {},\n",
@@ -457,6 +480,9 @@ fn propercase(s: &str) -> String {
 
 #[cfg(test)]
 mod tests {
+    use std::{collections::HashMap, io::prelude::*};
+
+    use crate::parse::ParseArguments;
     use pretty_assertions::assert_eq;
     use std::collections::HashMap;
     use std::io::prelude::*;
@@ -473,15 +499,11 @@ mod tests {
 
     #[test]
     fn build_normal() {
-        let parse_output = super::parse(
-            file_get_contents("test_data/schema.rs"),
-            "model",
-            None,
-            false,
-            &mut HashMap::default(),
-            "2",
-            false,
-        );
+        let parse_output = super::parse(ParseArguments {
+            action: "model".into(),
+            contents: file_get_contents("test_data/schema.rs"),
+            ..Default::default()
+        });
         println!("str_proto shows as follow:\n{}", parse_output.str_proto);
         assert_eq!(parse_output.str_proto.chars().count(), 266);
         assert_eq!(parse_output.str_into_proto.chars().count(), 708);
@@ -504,15 +526,11 @@ mod tests {
 
     #[test]
     fn build_with_localmodded() {
-        let parse_output = super::parse(
-            file_get_contents("test_data/schema_localmodded.rs"),
-            "model",
-            None,
-            false,
-            &mut HashMap::default(),
-            "2",
-            false,
-        );
+        let parse_output = super::parse(ParseArguments {
+            contents: file_get_contents("test_data/schema_localmodded.rs"),
+            action: "model".into(),
+            ..Default::default()
+        });
         println!("{}", parse_output.str_model);
         assert_eq!(
             parse_output.str_model,
@@ -529,15 +547,11 @@ mod tests {
 
     #[test]
     fn build_with_ip_bytea() {
-        let parse_output = super::parse(
-            file_get_contents("test_data/schema_with_ip_bytea.rs"),
-            "model",
-            None,
-            false,
-            &mut HashMap::default(),
-            "2",
-            false,
-        );
+        let parse_output = super::parse(ParseArguments {
+            contents: file_get_contents("test_data/schema_with_ip_bytea.rs"),
+            action: "model".into(),
+            ..Default::default()
+        });
         print!("{}", parse_output.str_model);
         assert_eq!(
             parse_output.str_model,
@@ -554,15 +568,11 @@ mod tests {
 
     #[test]
     fn build_with_tab() {
-        let parse_output = super::parse(
-            file_get_contents("test_data/schema_with_tab.rs"),
-            "model",
-            None,
-            false,
-            &mut HashMap::default(),
-            "2",
-            false,
-        );
+        let parse_output = super::parse(ParseArguments {
+            contents: file_get_contents("test_data/schema_with_tab.rs"),
+            action: "model".into(),
+            ..Default::default()
+        });
         print!("{}", parse_output.str_model);
 
         assert_eq!(parse_output.str_model.chars().count(), 85);
@@ -570,15 +580,11 @@ mod tests {
 
     #[test]
     fn build_with_time() {
-        let parse_output = super::parse(
-            file_get_contents("test_data/schema_with_time.rs"),
-            "model",
-            None,
-            false,
-            &mut HashMap::default(),
-            "2",
-            false,
-        );
+        let parse_output = super::parse(ParseArguments {
+            contents: file_get_contents("test_data/schema_with_time.rs"),
+            action: "model".into(),
+            ..Default::default()
+        });
         print!("{}", parse_output.str_model);
         assert_eq!(parse_output.str_model.chars().count(), 88);
         assert!(parse_output.type_nt);
@@ -586,15 +592,11 @@ mod tests {
 
     #[test]
     fn build_with_ies() {
-        let parse_output = super::parse(
-            file_get_contents("test_data/schema_with_ies.rs"),
-            "model",
-            None,
-            false,
-            &mut HashMap::default(),
-            "2",
-            false,
-        );
+        let parse_output = super::parse(ParseArguments {
+            contents: file_get_contents("test_data/schema_with_ies.rs"),
+            action: "model".into(),
+            ..Default::default()
+        });
         print!("{}", parse_output.str_model);
         assert_eq!(
             parse_output.str_model,
@@ -604,29 +606,21 @@ mod tests {
 
     #[test]
     fn build_with_identifiable() {
-        let parse_output = super::parse(
-            file_get_contents("test_data/schema.rs"),
-            "model",
-            Some("Identifiable".to_string()),
-            false,
-            &mut HashMap::default(),
-            "2",
-            false,
-        );
+        let parse_output = super::parse(ParseArguments {
+            contents: file_get_contents("test_data/schema.rs"),
+            action: "model".into(),
+            ..Default::default()
+        });
         print!("{}", parse_output.str_model);
     }
 
     #[test]
     fn build_with_uuid() {
-        let parse_output = super::parse(
-            file_get_contents("test_data/schema_uuid.rs"),
-            "model",
-            None,
-            false,
-            &mut HashMap::default(),
-            "2",
-            false,
-        );
+        let parse_output = super::parse(ParseArguments {
+            contents: file_get_contents("test_data/schema_uuid.rs"),
+            action: "model".into(),
+            ..Default::default()
+        });
         assert!(parse_output.type_uuid);
         assert_eq!(
             parse_output.str_model,
@@ -636,15 +630,11 @@ mod tests {
 
     #[test]
     fn build_with_mysql() {
-        let parse_output = super::parse(
-            file_get_contents("test_data/schema_mysql.rs"),
-            "model",
-            None,
-            false,
-            &mut HashMap::default(),
-            "2",
-            false,
-        );
+        let parse_output = super::parse(ParseArguments {
+            contents: file_get_contents("test_data/schema_mysql.rs"),
+            action: "model".into(),
+            ..Default::default()
+        });
         print!("a:{}", parse_output.str_model);
         assert_eq!(
             parse_output.str_model,
@@ -654,15 +644,11 @@ mod tests {
 
     #[test]
     fn build_with_jsonb() {
-        let parse_output = super::parse(
-            file_get_contents("test_data/schema_with_jsonb.rs"),
-            "model",
-            None,
-            false,
-            &mut HashMap::default(),
-            "2",
-            false,
-        );
+        let parse_output = super::parse(ParseArguments {
+            contents: file_get_contents("test_data/schema_with_jsonb.rs"),
+            action: "model".into(),
+            ..Default::default()
+        });
         print!("a:{}", parse_output.str_model);
         assert_eq!(
             parse_output.str_model,
@@ -672,15 +658,12 @@ mod tests {
 
     #[test]
     fn build_with_tablename_derives() {
-        let parse_output = super::parse(
-            file_get_contents("test_data/schema_with_tablename_derives.rs"),
-            "model",
-            None,
-            true,
-            &mut HashMap::default(),
-            "2",
-            false,
-        );
+        let parse_output = super::parse(ParseArguments {
+            contents: file_get_contents("test_data/schema_with_tablename_derives.rs"),
+            action: "model".into(),
+            add_table_name: true,
+            ..Default::default()
+        });
         print!("a:{}", parse_output.str_model);
         assert_eq!(
             parse_output.str_model,
@@ -690,19 +673,35 @@ mod tests {
 
     #[test]
     fn build_with_rust_style_fields() {
-        let parse_output = super::parse(
-            file_get_contents("test_data/schema_with_rust_style_fields.rs"),
-            "model",
-            None,
-            false,
-            &mut HashMap::default(),
-            "2",
-            true,
-        );
+        let parse_output = super::parse(ParseArguments {
+            contents: file_get_contents("test_data/schema_with_rust_style_fields.rs"),
+            action: "model".into(),
+            rust_styled_fields: true,
+            ..Default::default()
+        });
         print!("a:{}", parse_output.str_model);
         assert_eq!(
             parse_output.str_model,
             file_get_contents("test_data/expected_output/schema_with_rust_style_fields.rs")
+        );
+    }
+
+    #[test]
+    fn build_with_struct_name_override() {
+        let parse_output = super::parse(ParseArguments {
+            contents: file_get_contents("test_data/schema_with_struct_name_override.rs"),
+            action: "model".into(),
+            add_table_name: true,
+            struct_name_override: HashMap::from([(
+                "my_table".to_string(),
+                "MyOverriddenTable".to_string(),
+            )]),
+            ..Default::default()
+        });
+        print!("a:{}", parse_output.str_model);
+        assert_eq!(
+            parse_output.str_model,
+            file_get_contents("test_data/expected_output/schema_with_struct_name_override.rs")
         );
     }
 }
