@@ -17,6 +17,7 @@ pub struct ParseOutput {
     pub type_uuid: bool,
     pub type_tz: bool,
     pub type_jsonb: bool,
+    pub diesel_macro_use: bool,
 }
 
 pub struct ParseArguments {
@@ -63,7 +64,8 @@ pub fn parse(args: ParseArguments) -> ParseOutput {
         mut type_uuid,
         mut type_tz,
         mut type_jsonb,
-    ) = (false, false, false, false, false, false, false, false);
+        mut diesel_macro_use,
+    ) = (false, false, false, false, false, false, false, false, false);
 
     let mut count: u16 = 0;
     let mut struct_name: String = "".to_string();
@@ -231,6 +233,7 @@ pub fn parse(args: ParseArguments) -> ParseOutput {
                         " ".repeat(indent_depth),
                         vec[0].split('.').last().unwrap()
                     ));
+                    diesel_macro_use = true;
                 } else {
                     // add #[table_name = "name"]
                     str_model.push_str(&format!(
@@ -440,6 +443,7 @@ pub fn parse(args: ParseArguments) -> ParseOutput {
         type_uuid,
         type_tz,
         type_jsonb,
+        diesel_macro_use,
     }
 }
 

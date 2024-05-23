@@ -49,6 +49,9 @@ fn print_normal_dependencies(parse_output: &parse::ParseOutput) {
     if parse_output.type_jsonb {
         println!("use serde_json::Value;");
     }
+    if parse_output.diesel_macro_use {
+        println!("use diesel::prelude::*;");
+    }
 }
 fn print_conversion_dependencies() {
     //todo add selection for ndt and bd
