@@ -483,6 +483,9 @@ mod tests {
     use std::{collections::HashMap, io::prelude::*};
 
     use crate::parse::ParseArguments;
+    use pretty_assertions::assert_eq;
+    use std::collections::HashMap;
+    use std::io::prelude::*;
 
     fn file_get_contents(fname: &str) -> String {
         let mut f = ::std::fs::File::open(fname)
