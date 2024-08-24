@@ -75,6 +75,9 @@ pub fn parse(args: ParseArguments) -> ParseOutput {
         ("Int2", "i16"),
         ("SmallInt", "i16"), //sqlite
         ("Int4", "i32"),
+        ("SmallSerial", "i16"),
+        ("Serial", "i32"),
+        ("BigSerial", "i64"),
         ("Integer", "i32"), //sqlite
         ("Unsigned<Integer", "u32"),
         ("Unsigned<Decimal", "f64"),
