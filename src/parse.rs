@@ -100,6 +100,7 @@ pub fn parse(args: ParseArguments) -> ParseOutput {
         ("Uuid", "Uuid"),
         ("Char", "String"),
         ("Varchar", "String"),
+        ("Bpchar", "String"),
         ("Bytea", "Vec<u8>"),
         ("Binary", "Vec<u8>"),
         ("Varbinary", "Vec<u8>"),
