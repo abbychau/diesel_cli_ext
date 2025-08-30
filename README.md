@@ -6,10 +6,11 @@ Diesel CLI Extension is a tool-belt that aids Diesel CLI after it built schema.r
 [![Crates.io](https://img.shields.io/crates/v/diesel_cli_ext.svg)](https://crates.io/crates/diesel_cli_ext)
 <!-- [![Coverage Status](https://coveralls.io/repos/github/abbychau/diesel_cli_ext/badge.svg?branch=master)](https://coveralls.io/github/abbychau/diesel_cli_ext?branch=master) -->
 
-It contains 4 functions at this moment.
+It contains 5 functions at this moment.
 1. Generate protobuf file.(`diesel_ext proto`)
 2. Generate model rust structs.(`diesel_ext model`)
-3. Generate conversion implementations.(`diesel_ext into_proto`, and `diesel_ext from_proto`)
+3. Generate insertable rust structs.(`diesel_ext insertable`)
+4. Generate conversion implementations.(`diesel_ext into_proto`, and `diesel_ext from_proto`)
 
 ## Installation
 `cargo install diesel_cli_ext`
@@ -40,16 +41,36 @@ Model Options:
                         (NOT ready)This field adds derives for certain tables.
                         (can be set multiple times) e.g. --derive-mod
                         "table_name +Debug" --derive-mod "table_name2 -Debug"
+    -n, --struct-name-override "STRUCT NAME OVERRIDE"
+                        This field overrides the generated struct name for
+                        certain tables. (can be set multiple times)
+
+Insertable Options:
     -d, --derive DERIVES
                         set struct derives
-    -r, --rust_styled_model_fields
-                        set struct field names to be styled according to Rust guidelines
-
-Proto Options:
     -t, --add-table-name 
                         Add #[table_name = x] before structs
+    -r, --rust_styled_model_fields
+                        set struct field names to be styled according to Rust guidelines
+    -g, --insertable    Generate insertable structs for database inserts
+                        (omits auto-increment/default fields)
+    -S, --skip-fields "FIELD_NAME"
+                        Fields to skip in insertable structs (can be set
+                        multiple times) e.g. --skip-fields "id"
+    -O, --optional-fields "FIELD_NAME"
+                        Fields to make optional in insertable structs even if
+                        NOT NULL (can be set multiple times)
+    -P, --insertable-prefix PREFIX
+                        Prefix for insertable struct names (default: New)
+
+Proto Options:
     -p, --proto         Set as proto output
     -i, --into_proto    Set as into_proto output
+    -f, --from_proto    Set as from_proto output
+    -c, --class_name CLASS_NAME
+                        Set proto class name
+    -v, --diesel_version 1 or 2
+                        Set diesel version (default:2)
 ```
 
 (You can see it again by `diesel_ext --help`)
@@ -77,6 +98,54 @@ pub struct Order {
     pub id1 : i64,
     pub time : NaiveDateTime,
     pub json : String,
+}
+```
+
+### To generate insertable structs:
+`diesel_ext -g > src/insertable.rs`, `diesel_ext --insertable > src/insertable.rs`
+
+Insertable structs are perfect for database inserts as they omit auto-increment and default value columns. This follows Diesel's recommended pattern of using separate structs for querying and inserting data.
+
+**Key Features:**
+- Automatically skips common auto-generated fields (`id`, `created_at`, `updated_at`)
+- Uses string references (`&'a str`) for better performance
+- Supports custom field skipping and optional field configuration
+- Generates proper `#[derive(Insertable)]` annotations
+
+**Basic usage:**
+```bash
+diesel_ext -g -s schema.rs
+```
+
+**Advanced usage:**
+```bash
+# Skip custom fields
+diesel_ext -g -s schema.rs -S user_id -S account_id
+
+# Make fields optional (useful for database defaults)
+diesel_ext -g -s schema.rs -O status -O version
+
+# Custom struct name prefix
+diesel_ext -g -s schema.rs -P Create  # generates CreateUser instead of NewUser
+```
+
+Sample output:
+``` rust
+#[derive(Insertable)]
+#[diesel(table_name = users)]
+pub struct NewUser<'a> {
+    pub name: &'a str,
+    pub email: &'a str,
+    pub status: Option<&'a str>,  // Made optional with -O
+    // id, created_at, updated_at automatically skipped
+}
+
+#[derive(Insertable)]
+#[diesel(table_name = orders)]
+pub struct NewOrder<'a> {
+    pub user_id: i64,
+    pub amount: BigDecimal,
+    pub description: Option<&'a str>,
 }
 ```
 

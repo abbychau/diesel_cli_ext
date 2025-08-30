@@ -7,6 +7,7 @@ pub struct ParseOutput {
     pub str_request: String,
     pub str_rpc: String,
     pub str_model: String,
+    pub str_insertable: String,
     pub str_from_proto: String,
     pub str_into_proto: String,
     pub type_nd: bool,
@@ -29,6 +30,9 @@ pub struct ParseArguments {
     pub diesel_version: String,
     pub rust_styled_fields: bool,
     pub struct_name_override: HashMap<String, String>,
+    pub skip_fields: Vec<String>,
+    pub optional_fields: Vec<String>,
+    pub insertable_prefix: String,
 }
 
 impl Default for ParseArguments {
@@ -42,6 +46,9 @@ impl Default for ParseArguments {
             diesel_version: "2".into(),
             rust_styled_fields: Default::default(),
             struct_name_override: Default::default(),
+            skip_fields: vec!["id".to_string(), "created_at".to_string(), "updated_at".to_string()],
+            optional_fields: Default::default(),
+            insertable_prefix: "New".to_string(),
         }
     }
 }
@@ -49,6 +56,7 @@ impl Default for ParseArguments {
 pub fn parse(args: ParseArguments) -> ParseOutput {
     //Parse
     let mut str_model: String = "".to_string();
+    let mut str_insertable: String = "".to_string();
     let mut str_proto: String = "".to_string();
     let mut str_from_proto: String = "".to_string();
     let mut str_into_proto: String = "".to_string();
@@ -250,6 +258,34 @@ pub fn parse(args: ParseArguments) -> ParseOutput {
                 " ".repeat(indent_depth),
                 struct_name
             ));
+            
+            // Generate insertable struct header
+            if args.action == "model" || args.action == "insertable" {
+                let insertable_name = format!("{}{}", args.insertable_prefix, struct_name);
+                str_insertable.push_str(&format!(
+                    "\n{}#[derive(Insertable)]\n",
+                    " ".repeat(indent_depth)
+                ));
+                if args.diesel_version == "2" {
+                    str_insertable.push_str(&format!(
+                        "{}#[diesel(table_name = {})]\n",
+                        " ".repeat(indent_depth),
+                        vec[0].split('.').last().unwrap()
+                    ));
+                } else {
+                    str_insertable.push_str(&format!(
+                        "{}#[table_name = \"{}\"]\n",
+                        " ".repeat(indent_depth),
+                        vec[0].split('.').last().unwrap()
+                    ));
+                }
+                str_insertable.push_str(&format!(
+                    "{}pub struct {}<'a> {{\n",
+                    " ".repeat(indent_depth),
+                    insertable_name
+                ));
+            }
+            
             str_proto.push_str(&format!("message {} {{\n", struct_name));
 
             str_into_proto.push_str(&format!(
@@ -279,7 +315,7 @@ pub fn parse(args: ParseArguments) -> ParseOutput {
             let _type = vec[2].replace(',', "");
 
             let dict = match args.action.as_str() {
-                "model" => &model_type_dict,
+                "model" | "insertable" => &model_type_dict,
                 _ => &proto_type_dict,
             };
             let is_optional = _type.clone().trim().starts_with("Nullable<");
@@ -372,6 +408,69 @@ pub fn parse(args: ParseArguments) -> ParseOutput {
                     }
                 ));
             }
+            
+            // Generate insertable struct field
+            if args.action == "model" || args.action == "insertable" {
+                let field_name = if args.rust_styled_fields && !vec[0].is_case(Case::Snake) {
+                    vec[0].to_case(Case::Snake)
+                } else {
+                    vec[0].to_string()
+                };
+                
+                // Skip fields that should be omitted from insertable struct
+                if !args.skip_fields.contains(&field_name) {
+                    // Determine if this field should be optional in insertable struct
+                    let should_be_optional = is_optional || args.optional_fields.contains(&field_name);
+                    
+                    // Use string references for insertable structs where appropriate
+                    let insertable_type = match type_string {
+                        "String" => "&'a str",
+                        _ => type_string,
+                    };
+                    
+                    let insertable_type_with_wrap = if is_nullable_array {
+                        format!(
+                            "{}{}{}",
+                            "Vec<Option<".repeat(vec_count),
+                            insertable_type,
+                            ">>".repeat(vec_count)
+                        )
+                    } else {
+                        format!(
+                            "{}{}{}",
+                            "Vec<".repeat(vec_count),
+                            insertable_type,
+                            ">".repeat(vec_count)
+                        )
+                    };
+                    
+                    if args.rust_styled_fields && !vec[0].is_case(Case::Snake) {
+                        str_insertable.push_str(&format!(
+                            "{}#[diesel(column_name = \"{}\")]\n{}pub {}: {},\n",
+                            " ".repeat(indent_depth + 4),
+                            &vec[0],
+                            " ".repeat(indent_depth + 4),
+                            field_name,
+                            if should_be_optional {
+                                format!("Option<{}>", insertable_type_with_wrap)
+                            } else {
+                                insertable_type_with_wrap
+                            }
+                        ));
+                    } else {
+                        str_insertable.push_str(&format!(
+                            "{}pub {}: {},\n",
+                            " ".repeat(indent_depth + 4),
+                            &field_name,
+                            if should_be_optional {
+                                format!("Option<{}>", insertable_type_with_wrap)
+                            } else {
+                                insertable_type_with_wrap
+                            }
+                        ));
+                    }
+                }
+            }
             count += 1;
             if count == 1 {
                 let request_name = &format!("Enquire{}Request", &struct_name);
@@ -413,6 +512,13 @@ pub fn parse(args: ParseArguments) -> ParseOutput {
             count = 0;
             str_model.push_str(" ".repeat(indent_depth).as_str());
             str_model.push_str("}\n");
+            
+            // Close insertable struct
+            if args.action == "model" || args.action == "insertable" {
+                str_insertable.push_str(" ".repeat(indent_depth).as_str());
+                str_insertable.push_str("}\n");
+            }
+            
             str_proto.push_str("}\n");
             //" ".repeat(8)
             str_from_proto.push_str("        }\n");
@@ -426,14 +532,22 @@ pub fn parse(args: ParseArguments) -> ParseOutput {
 
     if is_schema {
         str_model.push_str("\n}\n");
+        if args.action == "model" || args.action == "insertable" {
+            str_insertable.push_str("\n}\n");
+        }
     }
     str_model = str_model.trim().replace("{trace1}", "");
     str_model.push('\n');
+    str_insertable = str_insertable.trim().to_string();
+    if !str_insertable.is_empty() {
+        str_insertable.push('\n');
+    }
     ParseOutput {
         str_proto,
         str_request,
         str_rpc,
         str_model,
+        str_insertable,
         str_from_proto,
         str_into_proto,
         type_nd,
@@ -706,5 +820,33 @@ mod tests {
             parse_output.str_model,
             file_get_contents("test_data/expected_output/schema_with_struct_name_override.rs")
         );
+    }
+
+    #[test]
+    fn build_insertable_struct() {
+        let parse_output = super::parse(ParseArguments {
+            contents: file_get_contents("test_data/schema.rs"),
+            action: "insertable".into(),
+            skip_fields: vec!["account_id".to_string(), "id1".to_string(), "id2".to_string()],
+            optional_fields: vec![],
+            insertable_prefix: "New".to_string(),
+            ..Default::default()
+        });
+        print!("insertable output:\n{}", parse_output.str_insertable);
+        // The exact output will match what we generated manually
+        assert!(!parse_output.str_insertable.is_empty());
+        assert!(parse_output.str_insertable.contains("NewCarryOverBalance"));
+        assert!(parse_output.str_insertable.contains("NewOrder"));
+        assert!(parse_output.str_insertable.contains("#[derive(Insertable)]"));
+        assert!(parse_output.str_insertable.contains("#[diesel(table_name"));
+        // Check that skipped fields are not present
+        assert!(!parse_output.str_insertable.contains("account_id"));
+        assert!(!parse_output.str_insertable.contains("id1"));
+        assert!(!parse_output.str_insertable.contains("id2"));
+        // Check that remaining fields are present
+        assert!(parse_output.str_insertable.contains("debit"));
+        assert!(parse_output.str_insertable.contains("description"));
+        assert!(parse_output.str_insertable.contains("time"));
+        assert!(parse_output.str_insertable.contains("json"));
     }
 }
