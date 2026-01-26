@@ -170,8 +170,16 @@ pub fn parse(args: ParseArguments) -> ParseOutput {
         } else if cmp.contains("pub mod ") && cmp.trim() != "pub mod sql_types {" {
             if is_schema {
                 str_model.push_str("\n}\n\n");
+                if args.action == "model" || args.action == "insertable" {
+                    str_insertable.push_str("\n}\n\n");
+                }
             }
             str_model.push_str(&format!("pub mod {} {{\n", &vec[2]));
+            str_model.push_str("    use super::*;\n");
+            if args.action == "model" || args.action == "insertable" {
+                str_insertable.push_str(&format!("pub mod {} {{\n", &vec[2]));
+                str_insertable.push_str("    use super::*;\n");
+            }
             is_schema = true;
         } else if cmp.contains("table!") {
             // add derives
