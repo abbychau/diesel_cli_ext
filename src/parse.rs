@@ -75,6 +75,8 @@ pub fn parse(args: ParseArguments) -> ParseOutput {
         mut diesel_macro_use,
     ) = (false, false, false, false, false, false, false, false, false);
 
+    let should_generate_insertable = args.action == "model" || args.action == "insertable";
+
     let mut count: u16 = 0;
     let mut struct_name: String = "".to_string();
     let content = args.contents.replace('\t', "    ");
@@ -170,8 +172,16 @@ pub fn parse(args: ParseArguments) -> ParseOutput {
         } else if cmp.contains("pub mod ") && cmp.trim() != "pub mod sql_types {" {
             if is_schema {
                 str_model.push_str("\n}\n\n");
+                if should_generate_insertable {
+                    str_insertable.push_str("\n}\n\n");
+                }
             }
             str_model.push_str(&format!("pub mod {} {{\n", &vec[2]));
+            str_model.push_str("    use super::*;\n");
+            if should_generate_insertable {
+                str_insertable.push_str(&format!("pub mod {} {{\n", &vec[2]));
+                str_insertable.push_str("    use super::*;\n");
+            }
             is_schema = true;
         } else if cmp.contains("table!") {
             // add derives
@@ -260,7 +270,7 @@ pub fn parse(args: ParseArguments) -> ParseOutput {
             ));
             
             // Generate insertable struct header
-            if args.action == "model" || args.action == "insertable" {
+            if should_generate_insertable {
                 let insertable_name = format!("{}{}", args.insertable_prefix, struct_name);
                 str_insertable.push_str(&format!(
                     "\n{}#[derive(Insertable)]\n",
@@ -410,7 +420,7 @@ pub fn parse(args: ParseArguments) -> ParseOutput {
             }
             
             // Generate insertable struct field
-            if args.action == "model" || args.action == "insertable" {
+            if should_generate_insertable {
                 let field_name = if args.rust_styled_fields && !vec[0].is_case(Case::Snake) {
                     vec[0].to_case(Case::Snake)
                 } else {
@@ -514,7 +524,7 @@ pub fn parse(args: ParseArguments) -> ParseOutput {
             str_model.push_str("}\n");
             
             // Close insertable struct
-            if args.action == "model" || args.action == "insertable" {
+            if should_generate_insertable {
                 str_insertable.push_str(" ".repeat(indent_depth).as_str());
                 str_insertable.push_str("}\n");
             }
@@ -532,7 +542,7 @@ pub fn parse(args: ParseArguments) -> ParseOutput {
 
     if is_schema {
         str_model.push_str("\n}\n");
-        if args.action == "model" || args.action == "insertable" {
+        if should_generate_insertable {
             str_insertable.push_str("\n}\n");
         }
     }

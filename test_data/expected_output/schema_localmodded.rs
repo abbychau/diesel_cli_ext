@@ -1,4 +1,5 @@
 pub mod my_schema {
+    use super::*;
 
     #[derive(Queryable, Debug, Identifiable)]
     #[diesel(primary_key(my_pk))]
@@ -17,6 +18,7 @@ pub mod my_schema {
 }
 
 pub mod my_other_schema {
+    use super::*;
 
     #[derive(Queryable, Debug, Identifiable)]
     #[diesel(primary_key(my_pk))]
@@ -28,6 +30,7 @@ pub mod my_other_schema {
 }
 
 pub mod tenant {
+    use super::*;
 
     #[derive(Queryable, Debug, Identifiable)]
     pub struct Asd {
